@@ -132,29 +132,47 @@ st.caption(
 )
 
 
+def file_fingerprint(path: Path) -> tuple[int, int]:
+    if not path.exists():
+        return (0, 0)
+    stat = path.stat()
+    return (int(stat.st_mtime_ns), int(stat.st_size))
+
+
 @st.cache_data
-def load_csv(path: Path) -> pd.DataFrame:
+def load_csv(path: Path, fingerprint: tuple[int, int]) -> pd.DataFrame:
     return pd.read_csv(path) if path.exists() else pd.DataFrame()
 
 
 @st.cache_data
-def load_json(path: Path) -> dict:
+def load_json(path: Path, fingerprint: tuple[int, int]) -> dict:
     if not path.exists():
         return {}
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
 
-recs = load_csv(OUTPUTS / "ht_recommendations.csv")
-sources = load_csv(CURATED / "sources.csv")
-source_files = load_csv(CURATED / "source_files.csv")
-recipes = load_csv(CURATED / "heat_treatment_recipes.csv")
-measurements = load_csv(CURATED / "mechanical_measurements.csv")
-scope = load_csv(EXTRACTED / "corpus_scope_audit.csv")
-online_manifest = load_csv(LITERATURE / "final_online_source_manifest.csv")
-trained_model = load_json(OUTPUTS / "physics_guided_model.json")
-route_predictions = load_csv(OUTPUTS / "route_property_predictions.csv")
-training_table = load_csv(OUTPUTS / "physics_guided_training_table.csv")
+recs_path = OUTPUTS / "ht_recommendations.csv"
+sources_path = CURATED / "sources.csv"
+source_files_path = CURATED / "source_files.csv"
+recipes_path = CURATED / "heat_treatment_recipes.csv"
+measurements_path = CURATED / "mechanical_measurements.csv"
+scope_path = EXTRACTED / "corpus_scope_audit.csv"
+online_manifest_path = LITERATURE / "final_online_source_manifest.csv"
+trained_model_path = OUTPUTS / "physics_guided_model.json"
+route_predictions_path = OUTPUTS / "route_property_predictions.csv"
+training_table_path = OUTPUTS / "physics_guided_training_table.csv"
+
+recs = load_csv(recs_path, file_fingerprint(recs_path))
+sources = load_csv(sources_path, file_fingerprint(sources_path))
+source_files = load_csv(source_files_path, file_fingerprint(source_files_path))
+recipes = load_csv(recipes_path, file_fingerprint(recipes_path))
+measurements = load_csv(measurements_path, file_fingerprint(measurements_path))
+scope = load_csv(scope_path, file_fingerprint(scope_path))
+online_manifest = load_csv(online_manifest_path, file_fingerprint(online_manifest_path))
+trained_model = load_json(trained_model_path, file_fingerprint(trained_model_path))
+route_predictions = load_csv(route_predictions_path, file_fingerprint(route_predictions_path))
+training_table = load_csv(training_table_path, file_fingerprint(training_table_path))
 supporting_literature = build_supporting_literature_table()
 
 ACADEMIC_COLORS = ["#2f5d62", "#5b7f95", "#8a6f3d", "#6b7280", "#a44a3f", "#7d8f69"]
