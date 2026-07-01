@@ -138,3 +138,34 @@ def test_dashboard_renders_equations_and_abbreviation_guidance_professionally():
     ]
     for phrase in required:
         assert phrase in APP_TEXT
+
+
+def test_dashboard_uses_sidebar_inputs_and_expander_disclosure():
+    required = [
+        "with st.sidebar:",
+        "Configuration",
+        "Current input context",
+        'with st.expander("Show model specification"',
+        'with st.expander("Show calibrated evidence table"',
+        'with st.expander("Generate text recommendation"',
+        "st.divider()",
+    ]
+    for phrase in required:
+        assert phrase in APP_TEXT
+
+
+def test_dashboard_adds_richer_academic_visualisations():
+    required = [
+        "Recommended-route thermal cycle",
+        "Property and evidence trade-off radar",
+        "Recommendation-index contribution summary",
+        "build_thermal_cycle_rows",
+        "build_route_radar_rows",
+        "build_recommendation_contribution_rows",
+        "go.Scatterpolar",
+        "go.Waterfall",
+        "hovertemplate",
+        "height=520",
+    ]
+    for phrase in required:
+        assert phrase in APP_TEXT

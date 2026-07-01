@@ -13,7 +13,13 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from ml_project.ht_advisor.dashboard_data import build_process_window_rows, build_property_tradeoff_rows
+from ml_project.ht_advisor.dashboard_data import (
+    build_process_window_rows,
+    build_property_tradeoff_rows,
+    build_recommendation_contribution_rows,
+    build_route_radar_rows,
+    build_thermal_cycle_rows,
+)
 from ml_project.ht_advisor.expert_system import (
     ManualInputContext,
     apply_manual_inputs,
@@ -46,29 +52,46 @@ st.markdown(
     """
     <style>
     :root {
-        --academic-ink: #1f2933;
-        --academic-muted: #52616b;
+        --academic-ink: #17212b;
+        --academic-muted: #4b5a66;
         --academic-border: #d8dee4;
-        --academic-panel: #f7f8fa;
-        --academic-accent: #2f5d62;
+        --academic-panel: #f4f6f7;
+        --academic-panel-strong: #eef3f2;
+        --academic-accent: #22535a;
         --academic-accent-soft: #e6eff0;
+        --academic-burgundy: #8d3f3f;
+        --academic-gold: #9b7a2f;
     }
     .stApp {
-        background: #fbfbfa;
+        background: #f8f8f5;
         color: var(--academic-ink);
     }
     [data-testid="stHeader"] {
-        background: #fbfbfa;
+        background: #f8f8f5;
+    }
+    [data-testid="stSidebar"] {
+        background: #eef3f2;
+        border-right: 1px solid #c9d5d4;
+    }
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: #183b42;
     }
     h1, h2, h3 {
         color: var(--academic-ink);
         letter-spacing: 0;
+    }
+    h1 {
+        border-bottom: 3px solid var(--academic-accent);
+        padding-bottom: 0.35rem;
     }
     div[data-testid="stMetric"] {
         background: var(--academic-panel);
         border: 1px solid var(--academic-border);
         border-radius: 4px;
         padding: 0.65rem 0.75rem;
+        box-shadow: 0 1px 2px rgba(23, 33, 43, 0.05);
     }
     div[data-testid="stInfo"] {
         background: var(--academic-accent-soft);
@@ -80,6 +103,22 @@ st.markdown(
     }
     button[kind="secondary"] {
         border-radius: 4px;
+    }
+    .route-chip {
+        display: inline-block;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        background: #e6eff0;
+        border: 1px solid #b7cacc;
+        color: #183b42;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    .context-note {
+        padding: 0.75rem 0.85rem;
+        border-left: 4px solid var(--academic-accent);
+        background: #f4f6f7;
+        color: var(--academic-ink);
     }
     </style>
     """,
@@ -415,19 +454,203 @@ INPUT_HELP = {
 }
 
 
-def academic_layout(fig: go.Figure, title: str) -> go.Figure:
+def academic_layout(fig: go.Figure, title: str, height: int | None = None) -> go.Figure:
     fig.update_layout(
         title=title,
         title_font=dict(size=17, color="#1f2933"),
-        paper_bgcolor="#fbfbfa",
-        plot_bgcolor="#fbfbfa",
+        paper_bgcolor="#f8f8f5",
+        plot_bgcolor="#f8f8f5",
         font=dict(family="Arial", color="#1f2933", size=13),
         margin=dict(l=20, r=20, t=55, b=35),
         legend_title_text="",
     )
+    if height is not None:
+        fig.update_layout(height=height)
     fig.update_xaxes(showgrid=True, gridcolor="#e5e7eb", zeroline=False)
     fig.update_yaxes(showgrid=True, gridcolor="#e5e7eb", zeroline=False)
     return fig
+
+
+with st.sidebar:
+    st.header("Configuration")
+    st.caption("Persistent input parameters for all recommendation, process-window, and property views.")
+    target = st.selectbox(
+        "Primary design objective",
+        ["balanced", "fatigue", "strength", "ductility"],
+        help=INPUT_HELP["target"],
+    )
+    allow_hip = st.toggle(
+        "Include HIP benchmark routes",
+        value=False,
+        help=INPUT_HELP["allow_hip"],
+    )
+    mode = st.selectbox(
+        "Decision posture",
+        ["conservative", "balanced", "exploratory"],
+        index=1,
+        help=INPUT_HELP["mode"],
+    )
+    furnace_limit = st.selectbox(
+        "Available furnace range",
+        ["up to 980 C", "up to 1065 C", "up to 1100 C", "not specified"],
+        index=3,
+        help=INPUT_HELP["furnace_limit"],
+    )
+    build_orientation = st.selectbox(
+        "Build orientation",
+        ["vertical", "horizontal", "mixed", "not specified"],
+        help=INPUT_HELP["build_orientation"],
+    )
+    initial_state = st.selectbox(
+        "Initial material state",
+        ["EOS-like LPBF, as-built", "EOS-like LPBF, stress relieved", "EOS-like LPBF, machined"],
+        help=INPUT_HELP["initial_state"],
+    )
+    section_size = st.selectbox(
+        "Representative section size",
+        ["thin section", "moderate section", "large thermal mass", "not specified"],
+        index=3,
+        help=INPUT_HELP["section_size"],
+    )
+    surface_condition = st.selectbox(
+        "Surface condition",
+        ["machined", "polished", "as-built", "not specified"],
+        help=INPUT_HELP["surface_condition"],
+    )
+
+    st.markdown("#### Manual experimental inputs")
+    furnace_defaults = {"up to 980 C": 980, "up to 1065 C": 1065, "up to 1100 C": 1100, "not specified": 1100}
+    furnace_limit_C = st.number_input(
+        "Maximum furnace temperature (C)",
+        min_value=600,
+        max_value=1250,
+        value=furnace_defaults[furnace_limit],
+        step=5,
+        help=INPUT_HELP["furnace_limit_C"],
+    )
+    maximum_cycle_hours = st.number_input(
+        "Maximum practical cycle time (h)",
+        min_value=1.0,
+        max_value=96.0,
+        value=20.0,
+        step=1.0,
+        help=INPUT_HELP["maximum_cycle_hours"],
+    )
+    target_life_cycles = st.number_input(
+        "Target fatigue life, if applicable (cycles)",
+        min_value=0,
+        max_value=100000000,
+        value=1000000,
+        step=100000,
+        help=INPUT_HELP["target_life_cycles"],
+    )
+    cooling_condition = st.selectbox(
+        "Cooling condition available",
+        ["controlled furnace cooling", "air cooling", "water quench", "not specified"],
+        help=INPUT_HELP["cooling_condition"],
+    )
+    chemistry_record = st.toggle(
+        "Record nominal chemistry inputs",
+        value=False,
+        help=INPUT_HELP["chemistry_record"],
+    )
+    niobium = aluminium = titanium = None
+    if chemistry_record:
+        niobium = st.number_input(
+            "Nb + Ta (wt.%)",
+            min_value=0.0,
+            max_value=8.0,
+            value=5.1,
+            step=0.1,
+            help=INPUT_HELP["niobium"],
+        )
+        aluminium = st.number_input(
+            "Al (wt.%)",
+            min_value=0.0,
+            max_value=2.0,
+            value=0.5,
+            step=0.05,
+            help=INPUT_HELP["aluminium"],
+        )
+        titanium = st.number_input(
+            "Ti (wt.%)",
+            min_value=0.0,
+            max_value=2.0,
+            value=1.0,
+            step=0.05,
+            help=INPUT_HELP["titanium"],
+        )
+
+    with st.expander("Current input context", expanded=False):
+        st.write(
+            {
+                "primary_design_objective": target,
+                "hip_benchmark_included": allow_hip,
+                "decision_posture": mode,
+                "available_furnace_range": furnace_limit,
+                "maximum_furnace_temperature_C": furnace_limit_C,
+                "maximum_practical_cycle_time_h": maximum_cycle_hours,
+                "initial_material_state": initial_state,
+                "representative_section_size": section_size,
+                "surface_condition": surface_condition,
+                "build_orientation": build_orientation,
+                "cooling_condition_available": cooling_condition,
+                "target_fatigue_life_cycles": target_life_cycles,
+            }
+        )
+    with st.expander("Show example combinations", expanded=False):
+        st.markdown("#### Example input combinations")
+        st.dataframe(build_example_input_combinations(), width="stretch")
+    with st.expander("Available treatment routes", expanded=False):
+        st.markdown("#### Available treatment routes in the reviewed evidence base")
+        if recs.empty:
+            st.info("The reviewed recommendation table is not available in this session.")
+        else:
+            st.dataframe(
+                recs[
+                    [
+                        "target",
+                        "allow_hip",
+                        "confidence_mode",
+                        "ht_class",
+                        "temperature_time_window",
+                        "confidence",
+                    ]
+                ].drop_duplicates(),
+                width="stretch",
+            )
+
+manual_context = ManualInputContext(
+    furnace_limit_C=int(furnace_limit_C),
+    maximum_cycle_hours=float(maximum_cycle_hours),
+    section_size=section_size,
+    surface_condition=surface_condition,
+    build_orientation=build_orientation,
+    initial_material_state=initial_state,
+    cooling_condition=cooling_condition,
+    target_life_cycles=int(target_life_cycles) if target_life_cycles else None,
+    niobium_wt_percent=niobium,
+    aluminium_wt_percent=aluminium,
+    titanium_wt_percent=titanium,
+)
+
+filtered = pd.DataFrame()
+adjusted = pd.DataFrame()
+selection_status: dict[str, object] = {
+    "exact_match": True,
+    "selection_note": (
+        "The selected input combination is outside the reviewed recommendation grid. "
+        "Recommendations below use the closest available evidence subset and should be treated as extrapolative screening guidance."
+    ),
+    "out_of_grid_fields": [],
+    "fallback_scope": "not evaluated",
+}
+if not recs.empty:
+    filtered, selection_status = select_recommendation_subset(recs, target, allow_hip, mode)
+    adjusted = apply_manual_inputs(filtered, manual_context)
+    adjusted = apply_ml_property_ranking(adjusted, route_predictions, target)
+
+top_row = adjusted.sort_values("ml_assisted_rank").iloc[0] if not adjusted.empty else None
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "Decision Dossier",
@@ -440,187 +663,47 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 
 with tab1:
     st.subheader("Decision Support Dossier")
-    st.markdown("#### Required input context")
-    with st.expander("Show example combinations"):
-        st.markdown("#### Example input combinations")
-        st.dataframe(build_example_input_combinations(), use_container_width=True)
-        st.markdown("#### Available treatment routes in the reviewed evidence base")
-        if recs.empty:
-            st.info("The reviewed recommendation table is not available in this session.")
-        else:
-            route_columns = [
-                "target",
-                "allow_hip",
-                "confidence_mode",
-                "ht_class",
-                "temperature_time_window",
-                "confidence",
-            ]
-            st.dataframe(recs[route_columns].drop_duplicates(), use_container_width=True)
+    if top_row is not None:
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Recommended route", str(top_row["ht_class"]))
+        m2.metric("Recommendation index", f"{float(top_row['ml_assisted_score']):.2f}")
+        m3.metric("Evidence confidence", str(top_row["confidence"]))
+        occupancy = top_row.get("estimated_furnace_occupancy_h", "not assessed")
+        m4.metric("Estimated furnace occupancy", f"{float(occupancy):.1f} h" if pd.notna(occupancy) and occupancy != "not assessed" else "not assessed")
 
-    left, right = st.columns(2)
-    with left:
-        target = st.selectbox(
-            "Primary design objective",
-            ["balanced", "fatigue", "strength", "ductility"],
-            help=INPUT_HELP["target"],
-        )
-        initial_state = st.selectbox(
-            "Initial material state",
-            ["EOS-like LPBF, as-built", "EOS-like LPBF, stress relieved", "EOS-like LPBF, machined"],
-            help=INPUT_HELP["initial_state"],
-        )
-        section_size = st.selectbox(
-            "Representative section size",
-            ["thin section", "moderate section", "large thermal mass", "not specified"],
-            index=3,
-            help=INPUT_HELP["section_size"],
-        )
-        surface_condition = st.selectbox(
-            "Surface condition",
-            ["machined", "polished", "as-built", "not specified"],
-            help=INPUT_HELP["surface_condition"],
-        )
-    with right:
-        allow_hip = st.toggle(
-            "Include HIP benchmark routes",
-            value=False,
-            help=INPUT_HELP["allow_hip"],
-        )
-        mode = st.selectbox(
-            "Decision posture",
-            ["conservative", "balanced", "exploratory"],
-            index=1,
-            help=INPUT_HELP["mode"],
-        )
-        furnace_limit = st.selectbox(
-            "Available furnace range",
-            ["up to 980 C", "up to 1065 C", "up to 1100 C", "not specified"],
-            index=3,
-            help=INPUT_HELP["furnace_limit"],
-        )
-        build_orientation = st.selectbox(
-            "Build orientation",
-            ["vertical", "horizontal", "mixed", "not specified"],
-            help=INPUT_HELP["build_orientation"],
+    with st.expander("Current input context", expanded=False):
+        st.write(
+            {
+                "primary_design_objective": target,
+                "initial_material_state": initial_state,
+                "representative_section_size": section_size,
+                "hip_benchmark_included": allow_hip,
+                "decision_posture": mode,
+                "available_furnace_range": furnace_limit,
+                "maximum_furnace_temperature_C": furnace_limit_C,
+                "maximum_practical_cycle_time_h": maximum_cycle_hours,
+                "surface_condition": surface_condition,
+                "build_orientation": build_orientation,
+                "cooling_condition_available": cooling_condition,
+                "target_fatigue_life_cycles": target_life_cycles,
+            }
         )
 
-    st.markdown("#### Manual experimental inputs")
-    furnace_defaults = {"up to 980 C": 980, "up to 1065 C": 1065, "up to 1100 C": 1100, "not specified": 1100}
-    m1, m2, m3 = st.columns(3)
-    with m1:
-        furnace_limit_C = st.number_input(
-            "Maximum furnace temperature (C)",
-            min_value=600,
-            max_value=1250,
-            value=furnace_defaults[furnace_limit],
-            step=5,
-            help=INPUT_HELP["furnace_limit_C"],
-        )
-    with m2:
-        maximum_cycle_hours = st.number_input(
-            "Maximum practical cycle time (h)",
-            min_value=1.0,
-            max_value=96.0,
-            value=20.0,
-            step=1.0,
-            help=INPUT_HELP["maximum_cycle_hours"],
-        )
-    with m3:
-        target_life_cycles = st.number_input(
-            "Target fatigue life, if applicable (cycles)",
-            min_value=0,
-            max_value=100000000,
-            value=1000000,
-            step=100000,
-            help=INPUT_HELP["target_life_cycles"],
-        )
-    m4, m5 = st.columns(2)
-    with m4:
-        cooling_condition = st.selectbox(
-            "Cooling condition available",
-            ["controlled furnace cooling", "air cooling", "water quench", "not specified"],
-            help=INPUT_HELP["cooling_condition"],
-        )
-    with m5:
-        chemistry_record = st.toggle(
-            "Record nominal chemistry inputs",
-            value=False,
-            help=INPUT_HELP["chemistry_record"],
-        )
-    niobium = aluminium = titanium = None
-    if chemistry_record:
-        c1, c2, c3 = st.columns(3)
-        with c1:
-            niobium = st.number_input(
-                "Nb + Ta (wt.%)",
-                min_value=0.0,
-                max_value=8.0,
-                value=5.1,
-                step=0.1,
-                help=INPUT_HELP["niobium"],
+    with st.expander("Disclaimer and context", expanded=True):
+        if not allow_hip:
+            st.info("Local constraint: HIP is not available. Ranked routes therefore prioritise non-HIP heat treatments, while HIP remains available as a benchmark comparison.")
+        if trained_model:
+            trained_targets = ", ".join(trained_model.get("trained_targets", [])) or "none"
+            st.caption(
+                f"Calibration status: {trained_model.get('model_status', 'not available')}. "
+                f"Calibrated targets: {trained_targets}. This is not a physics-informed neural network."
             )
-        with c2:
-            aluminium = st.number_input(
-                "Al (wt.%)",
-                min_value=0.0,
-                max_value=2.0,
-                value=0.5,
-                step=0.05,
-                help=INPUT_HELP["aluminium"],
-            )
-        with c3:
-            titanium = st.number_input(
-                "Ti (wt.%)",
-                min_value=0.0,
-                max_value=2.0,
-                value=1.0,
-                step=0.05,
-                help=INPUT_HELP["titanium"],
-            )
-
-    manual_context = ManualInputContext(
-        furnace_limit_C=int(furnace_limit_C),
-        maximum_cycle_hours=float(maximum_cycle_hours),
-        section_size=section_size,
-        surface_condition=surface_condition,
-        build_orientation=build_orientation,
-        initial_material_state=initial_state,
-        cooling_condition=cooling_condition,
-        target_life_cycles=int(target_life_cycles) if target_life_cycles else None,
-        niobium_wt_percent=niobium,
-        aluminium_wt_percent=aluminium,
-        titanium_wt_percent=titanium,
-    )
-
-    if not allow_hip:
-        st.info("Local constraint: HIP is not available. Ranked routes therefore prioritise non-HIP heat treatments, while HIP remains available as a benchmark comparison.")
-    if trained_model:
-        trained_targets = ", ".join(trained_model.get("trained_targets", [])) or "none"
-        st.caption(
-            f"Calibration status: {trained_model.get('model_status', 'not available')}. "
-            f"Calibrated targets: {trained_targets}. This is not a physics-informed neural network."
+        st.warning(
+            "Scientific interpretation note: recommendations currently optimize static tensile indicators only; "
+            "fatigue is defect-controlled in non-HIP LPBF Inconel 718 and must not be inferred from tensile strength alone."
         )
-    st.warning(
-        "Scientific interpretation note: recommendations currently optimize static tensile indicators only; "
-        "fatigue is defect-controlled in non-HIP LPBF Inconel 718 and must not be inferred from tensile strength alone."
-    )
+    st.divider()
     st.markdown("#### Ranked treatment routes")
-    filtered = pd.DataFrame()
-    adjusted = pd.DataFrame()
-    selection_status: dict[str, object] = {
-        "exact_match": True,
-        "selection_note": (
-            "The selected input combination is outside the reviewed recommendation grid. "
-            "Recommendations below use the closest available evidence subset and should be treated as extrapolative screening guidance."
-        ),
-        "out_of_grid_fields": [],
-        "fallback_scope": "not evaluated",
-    }
-    if not recs.empty:
-        filtered, selection_status = select_recommendation_subset(recs, target, allow_hip, mode)
-        adjusted = apply_manual_inputs(filtered, manual_context)
-        adjusted = apply_ml_property_ranking(adjusted, route_predictions, target)
     if filtered.empty:
         st.warning("The reviewed evidence base is empty; treatment-route ranking cannot be computed in this session.")
     else:
@@ -629,7 +712,7 @@ with tab1:
             out_of_grid_fields = selection_status.get("out_of_grid_fields", [])
             if out_of_grid_fields:
                 st.markdown("#### Out-of-grid input fields")
-                st.dataframe(pd.DataFrame(out_of_grid_fields), use_container_width=True)
+                st.dataframe(pd.DataFrame(out_of_grid_fields), width="stretch")
             st.caption(f"Fallback evidence subset: {selection_status.get('fallback_scope', 'closest available evidence subset')}.")
 
         plot_rows = adjusted.copy()
@@ -642,15 +725,25 @@ with tab1:
                 orientation="h",
                 text="ml_assisted_score",
                 color_discrete_map=FEASIBILITY_COLORS,
+                custom_data=["local_feasibility"],
                 labels={
                     "ml_assisted_score": "Model-supported recommendation index",
                     "ht_class": "Heat-treatment route",
                     "local_feasibility": "Local feasibility",
                 },
             )
-            fig.update_traces(texttemplate="%{text:.2f}", textposition="outside")
+            fig.update_traces(
+                texttemplate="%{text:.2f}",
+                textposition="outside",
+                hovertemplate=(
+                    "Route: %{y}<br>"
+                    "Recommendation index: %{x:.2f}<br>"
+                    "Local feasibility: %{customdata[0]}<br>"
+                    "<extra></extra>"
+                ),
+            )
             fig.update_yaxes(categoryorder="array", categoryarray=list(reversed(plot_rows["ht_class"].tolist())))
-            st.plotly_chart(academic_layout(fig, "Model-supported heat-treatment ranking for the selected input context"), use_container_width=True)
+            st.plotly_chart(academic_layout(fig, "Model-supported heat-treatment ranking for the selected input context", height=520), width="stretch")
 
             ev_fig = px.scatter(
                 plot_rows,
@@ -659,13 +752,87 @@ with tab1:
                 size="ml_assisted_score",
                 color="ht_class",
                 color_discrete_sequence=ACADEMIC_COLORS,
+                custom_data=["ht_class"],
                 labels={"ml_assisted_rank": "Model-supported recommendation rank", "evidence_count_seed": "Supporting records", "ht_class": "Heat-treatment route"},
             )
+            ev_fig.update_traces(
+                hovertemplate=(
+                    "Route: %{customdata[0]}<br>"
+                    "Rank: %{x}<br>"
+                    "Supporting records: %{y}<br>"
+                    "Recommendation index: %{marker.size:.2f}<br>"
+                    "<extra></extra>"
+                ),
+            )
             ev_fig.update_xaxes(dtick=1)
-            st.plotly_chart(academic_layout(ev_fig, "Evidence support by recommendation rank"), use_container_width=True)
+            st.plotly_chart(academic_layout(ev_fig, "Evidence support by recommendation rank", height=420), width="stretch")
 
-        top_row = adjusted.sort_values("ml_assisted_rank").iloc[0]
-        if st.button("Generate text recommendation"):
+            st.divider()
+            v1, v2 = st.columns(2)
+            with v1:
+                st.markdown("#### Recommended-route thermal cycle")
+                cycle_rows = build_thermal_cycle_rows(str(top_row["ht_class"]), str(top_row["temperature_time_window"])) if top_row is not None else pd.DataFrame()
+                if cycle_rows.empty:
+                    st.info("Thermal-cycle profile is unavailable for the selected route.")
+                else:
+                    cycle_fig = px.line(
+                        cycle_rows,
+                        x="elapsed_h",
+                        y="temperature_C",
+                        markers=True,
+                        color="ht_class",
+                        color_discrete_sequence=[ACADEMIC_COLORS[0]],
+                        labels={"elapsed_h": "Elapsed time (h)", "temperature_C": "Temperature (C)", "ht_class": "Route"},
+                    )
+                    cycle_fig.update_traces(
+                        hovertemplate=(
+                            "Route: %{customdata[0]}<br>"
+                            "Stage: %{customdata[1]}<br>"
+                            "Elapsed time: %{x:.2f} h<br>"
+                            "Temperature: %{y:.0f} C<br>"
+                            "<extra></extra>"
+                        ),
+                        customdata=cycle_rows[["ht_class", "stage"]],
+                    )
+                    st.plotly_chart(academic_layout(cycle_fig, "Time-temperature profile for the top-ranked route", height=420), width="stretch")
+            with v2:
+                st.markdown("#### Property and evidence trade-off radar")
+                radar_rows = build_route_radar_rows(adjusted.sort_values("ml_assisted_rank").head(3))
+                if radar_rows.empty:
+                    st.info("Radar comparison is unavailable for the selected route set.")
+                else:
+                    radar_fig = go.Figure()
+                    for route, subset in radar_rows.groupby("ht_class"):
+                        closed = pd.concat([subset, subset.iloc[[0]]], ignore_index=True)
+                        radar_fig.add_trace(
+                            go.Scatterpolar(
+                                r=closed["value"],
+                                theta=closed["axis"],
+                                fill="toself",
+                                name=str(route),
+                                hovertemplate="Route: %{fullData.name}<br>Axis: %{theta}<br>Normalised value: %{r:.1f}<extra></extra>",
+                            )
+                        )
+                    radar_fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), showlegend=True)
+                    st.plotly_chart(academic_layout(radar_fig, "Normalised route trade-off comparison", height=420), width="stretch")
+
+            st.markdown("#### Recommendation-index contribution summary")
+            contribution_rows = build_recommendation_contribution_rows(top_row) if top_row is not None else pd.DataFrame()
+            if not contribution_rows.empty:
+                contribution_fig = go.Figure(
+                    go.Waterfall(
+                        x=contribution_rows["term"],
+                        y=contribution_rows["value"],
+                        measure=contribution_rows["measure"],
+                        connector={"line": {"color": "#6b7280"}},
+                        increasing={"marker": {"color": ACADEMIC_COLORS[0]}},
+                        totals={"marker": {"color": ACADEMIC_COLORS[2]}},
+                        hovertemplate="Term: %{x}<br>Contribution: %{y:.2f}<extra></extra>",
+                    )
+                )
+                st.plotly_chart(academic_layout(contribution_fig, "Evidence and property terms in the selected recommendation index", height=420), width="stretch")
+
+        with st.expander("Generate text recommendation", expanded=False):
             st.markdown("#### Text recommendation")
             st.write(generate_text_recommendation(top_row, manual_context))
             if bool(top_row.get("outside_training_envelope", False)):
@@ -676,7 +843,7 @@ with tab1:
                 "Required set: as-built baseline; AMS-style standard baseline; framework-recommended route; "
                 "hardness and tensile testing; SEM/EDS microstructural assessment; fatigue screening where specimen count and machine time allow."
             )
-            st.dataframe(pd.DataFrame(build_must_have_experiments(str(top_row["ht_class"]), allow_hip)), use_container_width=True)
+            st.dataframe(pd.DataFrame(build_must_have_experiments(str(top_row["ht_class"]), allow_hip)), width="stretch")
             st.markdown("#### Stochastic response considerations")
             st.write(
                 "The ranking should be interpreted as a candidate selection, not as deterministic performance evidence. "
@@ -689,9 +856,7 @@ with tab1:
                     evidence = supporting_literature[supporting_literature["citation_key"] == note["citation_key"]].iloc[0]
                     st.write(f"**{evidence['display_citation']}** ({evidence['doi']}): {note['note']}")
 
-        if st.button("Show model specification"):
-            st.session_state["show_model_specification"] = not st.session_state.get("show_model_specification", False)
-        if st.session_state.get("show_model_specification", False):
+        with st.expander("Show model specification", expanded=False):
             st.markdown("#### Model specification")
             spec = build_model_specification()
             for key, value in spec.items():
@@ -716,6 +881,8 @@ with tab1:
                 cols[1].write(row["temperature_time_window"])
                 cols[2].write(f"Evidence confidence: **{row['confidence']}**")
                 cols[3].write(f"Supporting records: **{row['evidence_count_seed']}**")
+                st.progress(max(0.0, min(float(row["ml_assisted_score"]), 1.0)), text=f"Recommendation index {float(row['ml_assisted_score']):.2f}")
+                st.markdown(f"<span class='route-chip'>{row['local_feasibility']}</span>", unsafe_allow_html=True)
                 st.caption(row["recommendation_reason"])
                 with st.expander("Rationale and evidence status"):
                     st.write(f"Evidence envelope: **{row['inside_evidence_envelope']}**")
@@ -774,14 +941,12 @@ with tab2:
     c1.metric("Curated literature sources", len(sources))
     c2.metric("Local files with hashes", len(source_files))
     c3.metric("AM scope assessments", len(scope))
-    if st.button("Show calibrated evidence table"):
-        st.session_state["show_raw_training_data"] = not st.session_state.get("show_raw_training_data", False)
-    if st.session_state.get("show_raw_training_data", False):
+    with st.expander("Show calibrated evidence table", expanded=False):
         raw_training = build_raw_training_data_table(sources, source_files, online_manifest)
         st.caption("The calibration evidence table includes source identifier, title, DOI, reference URL, AM-scope assessment, local file hash, and download status.")
         st.dataframe(
             raw_training,
-            use_container_width=True,
+            width="stretch",
             column_config={
                 "doi": st.column_config.TextColumn("DOI"),
                 "url": st.column_config.LinkColumn("Reference URL"),
@@ -795,7 +960,7 @@ with tab2:
             mime="text/csv",
         )
     if not scope.empty:
-        st.dataframe(scope, use_container_width=True)
+        st.dataframe(scope, width="stretch")
     with st.expander("Supporting literature used for recommendation notes"):
         st.caption(
             "These papers support interpretation of ML fatigue methods and build-orientation effects. "
@@ -803,14 +968,14 @@ with tab2:
         )
         st.dataframe(
             supporting_literature,
-            use_container_width=True,
+            width="stretch",
             column_config={
                 "url": st.column_config.LinkColumn("Reference URL"),
                 "doi": st.column_config.TextColumn("DOI"),
             },
         )
     with st.expander("Source file identifiers and hashes"):
-        st.dataframe(source_files, use_container_width=True)
+        st.dataframe(source_files, width="stretch")
 
 with tab3:
     st.subheader("Process Window Explorer")
@@ -839,7 +1004,7 @@ with tab3:
                 )
             fig.update_xaxes(title="Observed or recommended temperature range (C)")
             fig.update_yaxes(title="Heat-treatment route")
-            st.plotly_chart(academic_layout(fig, "Temperature windows represented in the current recommendation set"), use_container_width=True)
+            st.plotly_chart(academic_layout(fig, "Temperature windows represented in the current recommendation set", height=520), width="stretch")
 
             posture_rows = []
             if not recs.empty:
@@ -863,10 +1028,10 @@ with tab3:
                     range_x=[0, max(0.9, float(animated["recommendation_index"].max()) + 0.05)],
                     labels={"recommendation_index": "Recommendation index", "ht_class": "Heat-treatment route"},
                 )
-                st.plotly_chart(academic_layout(anim_fig, "Animated sensitivity of route ranking to decision posture"), use_container_width=True)
+                st.plotly_chart(academic_layout(anim_fig, "Animated sensitivity of route ranking to decision posture", height=520), width="stretch")
 
         cols = ["ht_class", "temperature_time_window", "inside_evidence_envelope", "confidence", "recommendation_reason"]
-        st.dataframe(recs[cols].drop_duplicates(), use_container_width=True)
+        st.dataframe(recs[cols].drop_duplicates(), width="stretch")
 
 with tab4:
     st.subheader("Property Assessment")
@@ -920,12 +1085,20 @@ with tab4:
                 color_discrete_sequence=ACADEMIC_COLORS,
                 labels={"ht_class": "Heat-treatment route", "predicted_value": "Evidence-bounded predicted value", "predicted_property": "Predicted property"},
             )
-            st.plotly_chart(academic_layout(pred_fig, "Calibrated property estimates for candidate routes"), use_container_width=True)
+            pred_fig.update_traces(
+                hovertemplate=(
+                    "Route: %{x}<br>"
+                    "Predicted value: %{y:.1f}<br>"
+                    "Property: %{fullData.name}<br>"
+                    "<extra></extra>"
+                )
+            )
+            st.plotly_chart(academic_layout(pred_fig, "Calibrated property estimates for candidate routes", height=520), width="stretch")
         if route_predictions.get("outside_training_envelope", pd.Series(dtype=bool)).astype(bool).any():
             st.warning("Extrapolation warning: at least one candidate route lies outside the reviewed calibration feature envelope. Treat its property estimate as a screening value only.")
-        st.dataframe(route_predictions[prediction_cols], use_container_width=True)
+        st.dataframe(route_predictions[prediction_cols], width="stretch")
         with st.expander("Calibration data used by the fitted property model"):
-            st.dataframe(training_table, use_container_width=True)
+            st.dataframe(training_table, width="stretch")
     if not measurements.empty:
         counts = measurements.groupby(["ht_id", "property_type"]).size().reset_index(name="n")
         prop_fig = px.bar(
@@ -937,10 +1110,18 @@ with tab4:
             color_discrete_sequence=ACADEMIC_COLORS,
             labels={"ht_id": "Curated heat-treatment record", "n": "Number of property records", "property_type": "Property"},
         )
-        st.plotly_chart(academic_layout(prop_fig, "Curated property evidence available for the current dataset"), use_container_width=True)
-        st.dataframe(counts, use_container_width=True)
+        prop_fig.update_traces(
+            hovertemplate=(
+                "Heat-treatment record: %{x}<br>"
+                "Record count: %{y}<br>"
+                "Property: %{fullData.name}<br>"
+                "<extra></extra>"
+            )
+        )
+        st.plotly_chart(academic_layout(prop_fig, "Curated property evidence available for the current dataset", height=420), width="stretch")
+        st.dataframe(counts, width="stretch")
         with st.expander("Curated mechanical-property records"):
-            st.dataframe(measurements, use_container_width=True)
+            st.dataframe(measurements, width="stretch")
     else:
         st.warning("No curated mechanical-property records are currently available.")
 
@@ -948,7 +1129,7 @@ with tab5:
     st.subheader("Validation Plan")
     st.markdown("#### Must-have experimental validation")
     st.write("Minimum experiments required before presenting a framework-recommended route as a result.")
-    st.dataframe(pd.DataFrame(build_must_have_experiments("selected framework route", allow_hip=False)), use_container_width=True)
+    st.dataframe(pd.DataFrame(build_must_have_experiments("selected framework route", allow_hip=False)), width="stretch")
     st.markdown(
         """
         1. Include an as-built baseline.
@@ -983,7 +1164,7 @@ with tab6:
         st.warning("No calibrated model artifact is available. Calibrate the property model before using property estimates.")
     st.markdown("#### Notation and abbreviations")
     st.write("All route abbreviations and units used in the dashboard are defined here.")
-    st.dataframe(build_notation_table(), use_container_width=True)
+    st.dataframe(build_notation_table(), width="stretch")
     st.markdown("#### Physics used in the recommendation")
     st.write(
         "The equations below describe the feature construction and recommendation index used for interpretation. "
@@ -1013,7 +1194,7 @@ with tab6:
                 {"symbol": "s_property", "definition": "Calibrated static-property index when sufficient reviewed data exist."},
             ]
         ),
-        use_container_width=True,
+        width="stretch",
     )
     st.write("Defect-sensitive fatigue is treated qualitatively until defect-size or surface-roughness measurements are added.")
     st.markdown("#### Extrapolation warning and Empirical error bounds")
@@ -1044,6 +1225,6 @@ with tab6:
     )
     st.dataframe(
         supporting_literature[["display_citation", "title", "doi", "url", "extracted_result", "recommendation_implication"]],
-        use_container_width=True,
+        width="stretch",
         column_config={"url": st.column_config.LinkColumn("Reference URL")},
     )
