@@ -47,19 +47,60 @@ def test_manual_inputs_mark_routes_outside_local_furnace_limit():
     assert "No explicit solution treatment" in da["metallurgical_rule_flags"]
 
 
+def test_manual_inputs_rank_by_selected_recipe_not_upper_literature_window():
+    rows = pd.DataFrame(
+        [
+            {
+                "ht_class": "ST_DA",
+                "score": 0.78,
+                "temperature_time_window": "Solution treatment about 980-1095 C for 1-2 h, then ageing about 720 C/8 h and 620 C/8 h",
+                "selected_recipe_summary": "980 C for 1 h; 720 C for 8 h; 620 C for 8 h",
+                "recommended_peak_temperature_C": 980,
+                "recommended_total_hold_h": 17.0,
+                "confidence": "medium",
+                "evidence_count_seed": 12,
+            },
+            {
+                "ht_class": "HA_ST_DA",
+                "score": 0.76,
+                "temperature_time_window": "Homogenisation around 1065-1100 C, solution treatment, then double ageing",
+                "selected_recipe_summary": "1065 C for 1 h; 980 C for 1 h; 720 C for 8 h; 620 C for 8 h",
+                "recommended_peak_temperature_C": 1065,
+                "recommended_total_hold_h": 18.0,
+                "confidence": "medium",
+                "evidence_count_seed": 5,
+            },
+        ]
+    )
+
+    adjusted = apply_manual_inputs(rows, ManualInputContext(furnace_limit_C=980, maximum_cycle_hours=20))
+
+    st_da = adjusted.loc[adjusted["ht_class"] == "ST_DA"].iloc[0]
+    ha = adjusted.loc[adjusted["ht_class"] == "HA_ST_DA"].iloc[0]
+    assert st_da["local_feasibility"] == "feasible under selected constraints"
+    assert st_da["maximum_temperature_C"] == 980
+    assert st_da["estimated_cycle_hours"] == 17.0
+    assert ha["local_feasibility"] == "limited by selected furnace range"
+    assert st_da["adjusted_rank"] == 1
+
+
 def test_text_recommendation_reports_route_effects_and_stochastic_uncertainty():
     row = {
         "ht_class": "ST_DA",
         "temperature_time_window": "Solution treatment about 980-1095 C for 1-2 h, then ageing about 720 C/8 h and 620 C/8 h",
+        "selected_recipe_summary": "980 C for 1 h; 720 C for 8 h; 620 C for 8 h",
         "local_feasibility": "feasible under selected constraints",
         "constraint_notes": "No constraint penalties were applied.",
         "recommendation_reason": "Literature-supported non-HIP route.",
         "confidence": "medium",
         "adjusted_score": 0.79,
     }
-    text = generate_text_recommendation(row, ManualInputContext(target_life_cycles=1000000, surface_condition="machined"))
+    text = generate_text_recommendation(row, ManualInputContext(target_life_cycles=1000000, stress_ratio_R=0.1, surface_condition="machined"))
 
     assert "ST_DA" in text
+    assert "980 C for 1 h; 720 C for 8 h; 620 C for 8 h" in text
+    assert "R = 0.1" in text
+    assert "1,000,000 cycles" in text
     assert "precipitation strengthening" in text
     assert "stochastic" in text.lower()
     assert "local validation" in text.lower()

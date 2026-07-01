@@ -16,6 +16,7 @@ class ManualInputContext:
     initial_material_state: str = "EOS-like LPBF, machined"
     cooling_condition: str = "controlled furnace cooling"
     target_life_cycles: int | None = None
+    stress_ratio_R: float | None = 0.1
     niobium_wt_percent: float | None = None
     aluminium_wt_percent: float | None = None
     titanium_wt_percent: float | None = None
@@ -244,16 +245,26 @@ def apply_manual_inputs(recommendations: pd.DataFrame, context: ManualInputConte
                 "estimated_cycle_hours",
                 "estimated_furnace_occupancy_h",
                 "metallurgical_rule_flags",
+                "selected_recipe_summary",
+                "fatigue_validation_context",
             ]
         )
 
     adjusted = recommendations.copy()
     adjusted["maximum_temperature_C"] = adjusted.apply(
-        lambda row: max(_temperature_values(str(row.get("temperature_time_window", ""))) or [None]),
+        lambda row: (
+            int(row["recommended_peak_temperature_C"])
+            if pd.notna(row.get("recommended_peak_temperature_C"))
+            else max(_temperature_values(str(row.get("temperature_time_window", ""))) or [None])
+        ),
         axis=1,
     )
     adjusted["estimated_cycle_hours"] = adjusted.apply(
-        lambda row: _estimated_cycle_hours(str(row.get("ht_class", "")), str(row.get("temperature_time_window", ""))),
+        lambda row: (
+            float(row["recommended_total_hold_h"])
+            if pd.notna(row.get("recommended_total_hold_h"))
+            else _estimated_cycle_hours(str(row.get("ht_class", "")), str(row.get("temperature_time_window", "")))
+        ),
         axis=1,
     )
     adjusted["estimated_furnace_occupancy_h"] = adjusted.apply(
@@ -298,22 +309,34 @@ def apply_manual_inputs(recommendations: pd.DataFrame, context: ManualInputConte
     adjusted["adjusted_score"] = adjusted_scores
     adjusted["local_feasibility"] = feasibility
     adjusted["constraint_notes"] = notes
+    if "selected_recipe_summary" not in adjusted.columns:
+        adjusted["selected_recipe_summary"] = adjusted["temperature_time_window"]
+    adjusted["fatigue_validation_context"] = _fatigue_validation_context(context)
     adjusted = adjusted.sort_values("adjusted_score", ascending=False).reset_index(drop=True)
     adjusted["adjusted_rank"] = range(1, len(adjusted) + 1)
     return adjusted
 
 
+def _fatigue_validation_context(context: ManualInputContext) -> str:
+    stress_ratio = f"R = {context.stress_ratio_R:g}" if context.stress_ratio_R is not None else "R not specified"
+    life = f"Nf = {context.target_life_cycles:,} cycles" if context.target_life_cycles else "Nf not specified"
+    return f"{stress_ratio}; {life}"
+
+
 def generate_text_recommendation(top_row: dict | pd.Series, context: ManualInputContext) -> str:
     row = dict(top_row)
     ht_class = str(row.get("ht_class", "the selected route"))
+    selected_recipe = row.get("selected_recipe_summary", row.get("temperature_time_window", "not specified"))
+    fatigue_context = _fatigue_validation_context(context)
     target_cycles = (
-        f" A target fatigue life near {context.target_life_cycles:,} cycles should be treated as a validation target rather than an assumed outcome."
+        f" The fatigue validation target is {fatigue_context}; this should be treated as a validation target rather than an assumed outcome."
         if context.target_life_cycles
-        else ""
+        else f" Fatigue validation context is {fatigue_context}; fatigue life should not be inferred without local S-N testing."
     )
     return (
         f"The recommended primary route for the selected constraints is {ht_class}. "
-        f"The proposed window is {row.get('temperature_time_window', 'not specified')}. "
+        f"The selected validation recipe is {selected_recipe}. "
+        f"The supporting literature window is {row.get('temperature_time_window', 'not specified')}. "
         f"Expected effects are that {_route_effects(ht_class)} "
         f"Local feasibility is assessed as {row.get('local_feasibility', 'not assessed')}: {row.get('constraint_notes', 'no constraint note recorded')} "
         f"The recommendation index is {float(row.get('ml_assisted_score', row.get('adjusted_score', row.get('score', 0.0)))):.2f} with {row.get('confidence', 'unreported')} evidence confidence. "
@@ -333,10 +356,13 @@ def build_model_specification() -> dict[str, object]:
             "maximum practical cycle time",
             "section size, surface condition, build orientation, and initial material state",
             "optional composition descriptors for experimental record keeping",
+            "fatigue validation context: stress ratio R and target cycles to failure Nf",
         ],
         "outputs": [
             "ranked heat-treatment route",
+            "selected validation recipe with peak temperature and total hold time",
             "recommended temperature-time window",
+            "fatigue validation context with stress ratio and cycles to failure",
             "estimated furnace occupancy",
             "metallurgical rule flags",
             "local feasibility classification",

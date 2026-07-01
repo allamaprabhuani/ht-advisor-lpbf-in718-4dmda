@@ -38,6 +38,9 @@ def test_dashboard_exposes_manual_inputs_and_auditable_model_views():
     required = [
         "Manual experimental inputs",
         "Maximum practical cycle time",
+        "Fatigue stress ratio, R",
+        "Selected validation recipe",
+        "Fatigue validation context",
         "Text recommendation",
         "Generate text recommendation",
         "Show calibrated evidence table",
@@ -62,6 +65,7 @@ def test_dashboard_input_controls_include_detailed_help_text():
         "Maximum furnace temperature available for practical validation.",
         "Maximum total hold time that can be scheduled for a single heat-treatment route.",
         "Target fatigue life is used only as a validation objective.",
+        "Stress ratio R is the minimum cyclic stress divided by the maximum cyclic stress.",
         "Cooling condition affects residual stress relief, precipitation response, and practical repeatability.",
         "Enable this only when composition values will be recorded for the experimental batch.",
         "Nb + Ta content is relevant to Laves/Nb-rich segregation and gamma-double-prime strengthening.",

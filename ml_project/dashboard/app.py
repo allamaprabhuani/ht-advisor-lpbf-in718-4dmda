@@ -459,6 +459,11 @@ INPUT_HELP = {
         "Target fatigue life is used only as a validation objective. "
         "The current model does not infer fatigue life from tensile properties; fatigue claims require local S-N testing and defect characterisation."
     ),
+    "stress_ratio_R": (
+        "Stress ratio R is the minimum cyclic stress divided by the maximum cyclic stress. "
+        "Use R = 0.1 when matching the common tension-tension fatigue condition in the current LPBF Inconel 718 evidence table. "
+        "Use a different value only when the planned validation test uses a different loading ratio."
+    ),
     "cooling_condition": (
         "Cooling condition affects residual stress relief, precipitation response, and practical repeatability. "
         "Controlled furnace cooling is conservative and repeatable. Air cooling is practical for many non-HIP routes. "
@@ -573,6 +578,15 @@ with st.sidebar:
         step=100000,
         help=INPUT_HELP["target_life_cycles"],
     )
+    stress_ratio_R = st.number_input(
+        "Fatigue stress ratio, R",
+        min_value=-1.0,
+        max_value=0.9,
+        value=0.1,
+        step=0.1,
+        format="%.2f",
+        help=INPUT_HELP["stress_ratio_R"],
+    )
     cooling_condition = st.selectbox(
         "Cooling condition available",
         ["controlled furnace cooling", "air cooling", "water quench", "not specified"],
@@ -625,6 +639,7 @@ with st.sidebar:
                 "build_orientation": build_orientation,
                 "cooling_condition_available": cooling_condition,
                 "target_fatigue_life_cycles": target_life_cycles,
+                "fatigue_stress_ratio_R": stress_ratio_R,
             }
         )
     with st.expander("Show example combinations", expanded=False):
@@ -635,17 +650,19 @@ with st.sidebar:
         if recs.empty:
             st.info("The reviewed recommendation table is not available in this session.")
         else:
+            route_table_columns = [
+                "target",
+                "allow_hip",
+                "confidence_mode",
+                "ht_class",
+                "selected_recipe_summary",
+                "recommended_peak_temperature_C",
+                "recommended_total_hold_h",
+                "temperature_time_window",
+                "confidence",
+            ]
             st.dataframe(
-                recs[
-                    [
-                        "target",
-                        "allow_hip",
-                        "confidence_mode",
-                        "ht_class",
-                        "temperature_time_window",
-                        "confidence",
-                    ]
-                ].drop_duplicates(),
+                recs.reindex(columns=route_table_columns).drop_duplicates(),
                 width="stretch",
             )
 
@@ -658,6 +675,7 @@ manual_context = ManualInputContext(
     initial_material_state=initial_state,
     cooling_condition=cooling_condition,
     target_life_cycles=int(target_life_cycles) if target_life_cycles else None,
+    stress_ratio_R=float(stress_ratio_R),
     niobium_wt_percent=niobium,
     aluminium_wt_percent=aluminium,
     titanium_wt_percent=titanium,
@@ -699,6 +717,24 @@ with tab1:
         m3.metric("Evidence confidence", str(top_row["confidence"]), help="Categorical confidence derived from the number of supporting literature records.")
         occupancy = top_row.get("estimated_furnace_occupancy_h", "not assessed")
         m4.metric("Estimated furnace occupancy", f"{float(occupancy):.1f} h" if pd.notna(occupancy) and occupancy != "not assessed" else "not assessed", help="Total expected hours of furnace time, excluding ramp rates.")
+        st.markdown("#### Selected validation recipe")
+        recipe_cols = st.columns(3)
+        recipe_cols[0].metric(
+            "Peak temperature",
+            f"{int(top_row['recommended_peak_temperature_C'])} C" if pd.notna(top_row.get("recommended_peak_temperature_C")) else "not specified",
+            help="Concrete maximum temperature used for local feasibility ranking.",
+        )
+        recipe_cols[1].metric(
+            "Total hold time",
+            f"{float(top_row['recommended_total_hold_h']):.1f} h" if pd.notna(top_row.get("recommended_total_hold_h")) else "not specified",
+            help="Total scheduled hold time for the selected validation recipe.",
+        )
+        recipe_cols[2].metric(
+            "Fatigue validation context",
+            f"R = {stress_ratio_R:g}; Nf = {int(target_life_cycles):,}",
+            help="Stress ratio and target cycles for validation planning. This is not a fatigue-life prediction.",
+        )
+        st.write(str(top_row.get("selected_recipe_summary", "No selected recipe is available.")))
         st.markdown("#### Text recommendation")
         st.info(generate_text_recommendation(top_row, manual_context))
         st.caption(
@@ -720,6 +756,7 @@ with tab1:
                 "build_orientation": build_orientation,
                 "cooling_condition_available": cooling_condition,
                 "target_fatigue_life_cycles": target_life_cycles,
+                "fatigue_stress_ratio_R": stress_ratio_R,
             }
         )
 
@@ -805,7 +842,8 @@ with tab1:
             v1, v2 = st.columns(2)
             with v1:
                 st.markdown("#### Recommended-route thermal cycle")
-                cycle_rows = build_thermal_cycle_rows(str(top_row["ht_class"]), str(top_row["temperature_time_window"])) if top_row is not None else pd.DataFrame()
+                cycle_source = str(top_row.get("selected_recipe_summary", top_row["temperature_time_window"])) if top_row is not None else ""
+                cycle_rows = build_thermal_cycle_rows(str(top_row["ht_class"]), cycle_source) if top_row is not None else pd.DataFrame()
                 if cycle_rows.empty:
                     st.info("Thermal-cycle profile is unavailable for the selected route.")
                 else:
@@ -912,7 +950,7 @@ with tab1:
             with st.container(border=True):
                 cols = st.columns([1, 2, 1, 1])
                 cols[0].metric(f"Rank {int(row['ml_assisted_rank'])}", row["ht_class"], f"index {row['ml_assisted_score']:.2f}")
-                cols[1].write(row["temperature_time_window"])
+                cols[1].write(f"Selected recipe: {row.get('selected_recipe_summary', row['temperature_time_window'])}")
                 cols[2].write(f"Evidence confidence: **{row['confidence']}**")
                 cols[3].write(f"Supporting records: **{row['evidence_count_seed']}**")
                 st.progress(max(0.0, min(float(row["ml_assisted_score"]), 1.0)), text=f"Recommendation index {float(row['ml_assisted_score']):.2f}")
@@ -920,6 +958,13 @@ with tab1:
                 st.caption(row["recommendation_reason"])
                 with st.expander("Rationale and evidence status"):
                     st.write(f"Evidence envelope: **{row['inside_evidence_envelope']}**")
+                    st.write(f"Selected validation recipe: **{row.get('selected_recipe_summary', 'not specified')}**")
+                    if pd.notna(row.get("recommended_peak_temperature_C")):
+                        st.write(f"Selected peak temperature: **{int(row['recommended_peak_temperature_C'])} C**")
+                    if pd.notna(row.get("recommended_total_hold_h")):
+                        st.write(f"Selected total hold time: **{float(row['recommended_total_hold_h']):.1f} h**")
+                    st.write(f"Fatigue validation context: **R = {stress_ratio_R:g}; Nf = {int(target_life_cycles):,} cycles**")
+                    st.write(f"Supporting temperature-time window: {row['temperature_time_window']}")
                     st.write(f"Local feasibility: **{row['local_feasibility']}**")
                     st.write(row["constraint_notes"])
                     st.write(f"Property-estimation scope: **{row['ml_assistance_scope']}**")
@@ -966,6 +1011,7 @@ with tab1:
                     "build_orientation": build_orientation,
                     "cooling_condition_available": cooling_condition,
                     "target_fatigue_life_cycles": target_life_cycles,
+                    "fatigue_stress_ratio_R": stress_ratio_R,
                 }
             )
 
