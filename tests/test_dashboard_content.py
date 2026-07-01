@@ -41,6 +41,8 @@ def test_dashboard_exposes_manual_inputs_and_auditable_model_views():
         "Fatigue stress ratio, R",
         "Selected validation recipe",
         "Fatigue validation context",
+        "build_manual_context_from_inputs",
+        "inspect.signature",
         "Text recommendation",
         "Generate text recommendation",
         "Show calibrated evidence table",

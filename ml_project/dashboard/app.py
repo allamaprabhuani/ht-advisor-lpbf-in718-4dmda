@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import sys
+import inspect
 
 import pandas as pd
 import plotly.express as px
@@ -505,6 +506,11 @@ def academic_layout(fig: go.Figure, title: str, height: int | None = None) -> go
     return fig
 
 
+def build_manual_context_from_inputs(**values) -> ManualInputContext:
+    supported = set(inspect.signature(ManualInputContext).parameters)
+    return ManualInputContext(**{key: value for key, value in values.items() if key in supported})
+
+
 with st.sidebar:
     st.header("Configuration")
     st.caption("Persistent input parameters for all recommendation, process-window, and property views.")
@@ -666,7 +672,7 @@ with st.sidebar:
                 width="stretch",
             )
 
-manual_context = ManualInputContext(
+manual_context = build_manual_context_from_inputs(
     furnace_limit_C=int(furnace_limit_C),
     maximum_cycle_hours=float(maximum_cycle_hours),
     section_size=section_size,
