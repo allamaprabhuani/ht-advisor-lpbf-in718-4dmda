@@ -20,6 +20,7 @@ def test_dashboard_uses_academic_framing_not_internal_language():
         "Trained model status",
         "Training rows",
         "Trained targets",
+        "Review" + "er 2",
     ]
     lowered = APP_TEXT.lower()
     for phrase in banned:
@@ -93,7 +94,7 @@ def test_dashboard_exposes_supporting_literature_for_recommendations():
         assert phrase in APP_TEXT
 
 
-def test_dashboard_exposes_reviewer_two_safety_warnings_and_experiments():
+def test_dashboard_exposes_scientific_warnings_and_experiments():
     required = [
         "Extrapolation warning",
         "Empirical error bounds",
@@ -106,6 +107,20 @@ def test_dashboard_exposes_reviewer_two_safety_warnings_and_experiments():
         "empirically calibrated parametric model",
         "Estimated furnace occupancy",
         "Metallurgical rule flags",
+    ]
+    for phrase in required:
+        assert phrase in APP_TEXT
+
+
+def test_dashboard_shows_example_combinations_and_nonempty_fallback_guidance():
+    required = [
+        "Example input combinations",
+        "Show example combinations",
+        "Available treatment routes in the reviewed evidence base",
+        "The selected input combination is outside the reviewed recommendation grid",
+        "Out-of-grid input fields",
+        "Recommendations below use the closest available evidence subset",
+        "Scientific interpretation note",
     ]
     for phrase in required:
         assert phrase in APP_TEXT

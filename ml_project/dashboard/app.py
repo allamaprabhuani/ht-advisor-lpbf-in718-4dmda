@@ -17,10 +17,12 @@ from ml_project.ht_advisor.dashboard_data import build_process_window_rows, buil
 from ml_project.ht_advisor.expert_system import (
     ManualInputContext,
     apply_manual_inputs,
+    build_example_input_combinations,
     build_must_have_experiments,
     build_model_specification,
     build_raw_training_data_table,
     generate_text_recommendation,
+    select_recommendation_subset,
 )
 from ml_project.ht_advisor.literature_evidence import build_recommendation_literature_notes, build_supporting_literature_table
 from ml_project.ht_advisor.physics_guided_model import build_help_sections
@@ -220,6 +222,23 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 with tab1:
     st.subheader("Decision Support Dossier")
     st.markdown("#### Required input context")
+    with st.expander("Show example combinations"):
+        st.markdown("#### Example input combinations")
+        st.dataframe(build_example_input_combinations(), use_container_width=True)
+        st.markdown("#### Available treatment routes in the reviewed evidence base")
+        if recs.empty:
+            st.info("The reviewed recommendation table is not available in this session.")
+        else:
+            route_columns = [
+                "target",
+                "allow_hip",
+                "confidence_mode",
+                "ht_class",
+                "temperature_time_window",
+                "confidence",
+            ]
+            st.dataframe(recs[route_columns].drop_duplicates(), use_container_width=True)
+
     left, right = st.columns(2)
     with left:
         target = st.selectbox(
@@ -364,19 +383,36 @@ with tab1:
             f"Calibrated targets: {trained_targets}. This is not a physics-informed neural network."
         )
     st.warning(
-        "Reviewer 2 safety note: recommendations currently optimize static tensile indicators only; "
+        "Scientific interpretation note: recommendations currently optimize static tensile indicators only; "
         "fatigue is defect-controlled in non-HIP LPBF Inconel 718 and must not be inferred from tensile strength alone."
     )
     st.markdown("#### Ranked treatment routes")
     filtered = pd.DataFrame()
     adjusted = pd.DataFrame()
+    selection_status: dict[str, object] = {
+        "exact_match": True,
+        "selection_note": (
+            "The selected input combination is outside the reviewed recommendation grid. "
+            "Recommendations below use the closest available evidence subset and should be treated as extrapolative screening guidance."
+        ),
+        "out_of_grid_fields": [],
+        "fallback_scope": "not evaluated",
+    }
     if not recs.empty:
-        filtered = recs[(recs["target"] == target) & (recs["allow_hip"] == allow_hip) & (recs["confidence_mode"] == mode)]
+        filtered, selection_status = select_recommendation_subset(recs, target, allow_hip, mode)
         adjusted = apply_manual_inputs(filtered, manual_context)
         adjusted = apply_ml_property_ranking(adjusted, route_predictions, target)
     if filtered.empty:
-        st.warning("No recommendation dossier is currently available for the selected input combination.")
+        st.warning("The reviewed evidence base is empty; treatment-route ranking cannot be computed in this session.")
     else:
+        if not bool(selection_status.get("exact_match", True)):
+            st.warning(str(selection_status.get("selection_note", "")))
+            out_of_grid_fields = selection_status.get("out_of_grid_fields", [])
+            if out_of_grid_fields:
+                st.markdown("#### Out-of-grid input fields")
+                st.dataframe(pd.DataFrame(out_of_grid_fields), use_container_width=True)
+            st.caption(f"Fallback evidence subset: {selection_status.get('fallback_scope', 'closest available evidence subset')}.")
+
         plot_rows = adjusted.copy()
         if not plot_rows.empty:
             fig = px.bar(

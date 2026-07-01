@@ -3,10 +3,12 @@ import pandas as pd
 from ml_project.ht_advisor.expert_system import (
     ManualInputContext,
     apply_manual_inputs,
+    build_example_input_combinations,
     build_must_have_experiments,
     build_model_specification,
     build_raw_training_data_table,
     generate_text_recommendation,
+    select_recommendation_subset,
 )
 
 
@@ -140,3 +142,45 @@ def test_must_have_experiments_include_baselines_microstructure_and_fatigue_caut
     assert "SEM/EDS" in joined
     assert "fatigue" in joined.lower()
     assert any(item["priority"] == "required" for item in experiments)
+
+
+def test_select_recommendation_subset_falls_back_and_reports_out_of_grid_fields():
+    rows = pd.DataFrame(
+        [
+            {"target": "balanced", "allow_hip": False, "confidence_mode": "balanced", "ht_class": "ST_DA", "score": 0.7},
+            {"target": "fatigue", "allow_hip": False, "confidence_mode": "conservative", "ht_class": "ST_DA", "score": 0.8},
+            {"target": "fatigue", "allow_hip": False, "confidence_mode": "conservative", "ht_class": "DA", "score": 0.6},
+        ]
+    )
+
+    selected, status = select_recommendation_subset(rows, target="fatigue", allow_hip=False, confidence_mode="balanced")
+
+    assert selected["target"].eq("fatigue").all()
+    assert selected["confidence_mode"].eq("conservative").all()
+    assert status["exact_match"] is False
+    assert "outside the reviewed recommendation grid" in status["selection_note"]
+    assert status["out_of_grid_fields"][0]["field"] == "Decision posture"
+    assert status["out_of_grid_fields"][0]["selected"] == "balanced"
+    assert status["out_of_grid_fields"][0]["available"] == "conservative"
+
+
+def test_select_recommendation_subset_returns_nonempty_global_fallback():
+    rows = pd.DataFrame(
+        [
+            {"target": "balanced", "allow_hip": False, "confidence_mode": "balanced", "ht_class": "ST_DA", "score": 0.7},
+        ]
+    )
+
+    selected, status = select_recommendation_subset(rows, target="creep", allow_hip=True, confidence_mode="exploratory")
+
+    assert not selected.empty
+    assert status["exact_match"] is False
+    assert {item["field"] for item in status["out_of_grid_fields"]} == {"Primary design objective", "HIP benchmark inclusion", "Decision posture"}
+
+
+def test_example_input_combinations_are_available_for_guidance():
+    examples = build_example_input_combinations()
+
+    assert {"scenario", "example_inputs", "expected_route_family", "interpretation"}.issubset(examples.columns)
+    assert len(examples) >= 3
+    assert examples["example_inputs"].str.contains("Primary objective").all()

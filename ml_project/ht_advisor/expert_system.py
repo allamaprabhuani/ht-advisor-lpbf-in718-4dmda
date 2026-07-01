@@ -21,6 +21,157 @@ class ManualInputContext:
     titanium_wt_percent: float | None = None
 
 
+def _joined_available(values: pd.Series) -> str:
+    available = sorted(str(value) for value in values.dropna().unique())
+    return ", ".join(available) if available else "not available"
+
+
+def _recommendation_status(
+    exact_match: bool,
+    out_of_grid_fields: list[dict[str, str]],
+    fallback_scope: str,
+) -> dict[str, object]:
+    if exact_match:
+        note = "The selected input combination is represented in the reviewed recommendation grid."
+    else:
+        note = (
+            "The selected input combination is outside the reviewed recommendation grid. "
+            "Recommendations below use the closest available evidence subset and should be treated as extrapolative screening guidance."
+        )
+    return {
+        "exact_match": exact_match,
+        "fallback_scope": fallback_scope,
+        "selection_note": note,
+        "out_of_grid_fields": out_of_grid_fields,
+    }
+
+
+def _out_of_grid_fields(
+    recommendations: pd.DataFrame,
+    target: str,
+    allow_hip: bool,
+    confidence_mode: str,
+) -> list[dict[str, str]]:
+    fields: list[dict[str, str]] = []
+    if recommendations.empty:
+        return fields
+
+    available_targets = recommendations["target"].dropna().astype(str)
+    if target not in set(available_targets):
+        fields.append(
+            {
+                "field": "Primary design objective",
+                "selected": str(target),
+                "available": _joined_available(available_targets),
+                "interpretation": "No direct route ranking exists for this objective; the closest available objective is used for screening.",
+            }
+        )
+
+    target_rows = recommendations[recommendations["target"] == target]
+    hip_scope = target_rows if not target_rows.empty else recommendations
+    available_hip = hip_scope["allow_hip"].dropna().astype(bool)
+    if bool(allow_hip) not in set(available_hip):
+        fields.append(
+            {
+                "field": "HIP benchmark inclusion",
+                "selected": str(bool(allow_hip)),
+                "available": _joined_available(available_hip.astype(str)),
+                "interpretation": "The requested HIP setting is not represented for the selected objective; available routes are retained with explicit feasibility notes.",
+            }
+        )
+
+    mode_scope = recommendations[
+        (recommendations["target"] == target) & (recommendations["allow_hip"].astype(bool) == bool(allow_hip))
+    ]
+    if mode_scope.empty:
+        mode_scope = target_rows if not target_rows.empty else recommendations
+    available_modes = mode_scope["confidence_mode"].dropna().astype(str)
+    if confidence_mode not in set(available_modes):
+        fields.append(
+            {
+                "field": "Decision posture",
+                "selected": str(confidence_mode),
+                "available": _joined_available(available_modes),
+                "interpretation": "The requested decision posture is not available for this evidence subset; the nearest reviewed posture is used.",
+            }
+        )
+    return fields
+
+
+def select_recommendation_subset(
+    recommendations: pd.DataFrame,
+    target: str,
+    allow_hip: bool,
+    confidence_mode: str,
+) -> tuple[pd.DataFrame, dict[str, object]]:
+    if recommendations.empty:
+        return recommendations.copy(), _recommendation_status(False, [], "empty evidence base")
+
+    exact = recommendations[
+        (recommendations["target"] == target)
+        & (recommendations["allow_hip"].astype(bool) == bool(allow_hip))
+        & (recommendations["confidence_mode"] == confidence_mode)
+    ].copy()
+    if not exact.empty:
+        return exact, _recommendation_status(True, [], "exact selection")
+
+    out_of_grid = _out_of_grid_fields(recommendations, target, allow_hip, confidence_mode)
+    fallback_rules = [
+        (
+            "same objective and HIP setting with nearest available decision posture",
+            (recommendations["target"] == target) & (recommendations["allow_hip"].astype(bool) == bool(allow_hip)),
+        ),
+        (
+            "same objective with available HIP setting",
+            recommendations["target"] == target,
+        ),
+        (
+            "balanced objective with selected HIP setting",
+            (recommendations["target"] == "balanced") & (recommendations["allow_hip"].astype(bool) == bool(allow_hip)),
+        ),
+        (
+            "balanced non-HIP evidence subset",
+            (recommendations["target"] == "balanced") & (recommendations["allow_hip"].astype(bool) == False),
+        ),
+    ]
+    for scope, mask in fallback_rules:
+        subset = recommendations[mask].copy()
+        if not subset.empty:
+            return subset, _recommendation_status(False, out_of_grid, scope)
+    return recommendations.copy(), _recommendation_status(False, out_of_grid, "complete evidence base")
+
+
+def build_example_input_combinations() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "scenario": "Local non-HIP baseline validation",
+                "example_inputs": "Primary objective: balanced; HIP benchmark: off; furnace: up to 1065 C; surface: machined; orientation: vertical",
+                "expected_route_family": "ST_DA or CUSTOM_ST_DA",
+                "interpretation": "Suitable for a practical first validation set because it stays within common non-HIP furnace capability.",
+            },
+            {
+                "scenario": "Lower-temperature screening route",
+                "example_inputs": "Primary objective: strength; HIP benchmark: off; furnace: up to 980 C; surface: machined; cycle limit: 20 h",
+                "expected_route_family": "DA or lower-temperature ST_DA",
+                "interpretation": "Useful when high-temperature homogenisation is not available; interpret fatigue response cautiously.",
+            },
+            {
+                "scenario": "Segregation-control comparison",
+                "example_inputs": "Primary objective: ductility; HIP benchmark: off; furnace: up to 1100 C; section size: moderate section",
+                "expected_route_family": "HA_ST_DA or ST_DA",
+                "interpretation": "Useful when the experiment is designed to test Laves/Nb-rich segregation control against a simpler route.",
+            },
+            {
+                "scenario": "Literature benchmark with HIP",
+                "example_inputs": "Primary objective: balanced; HIP benchmark: on; furnace: not specified; surface: machined",
+                "expected_route_family": "HIP_ST_DA, HIP_DA, and non-HIP comparators",
+                "interpretation": "Use only as a comparison case when local HIP processing is unavailable.",
+            },
+        ]
+    )
+
+
 def _temperature_values(window: str) -> list[int]:
     return [int(value) for value in re.findall(r"(\d{3,4})\s*C", window or "")]
 
