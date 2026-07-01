@@ -989,7 +989,10 @@ with tab2:
                 "Point rows remain empty until marker-level data are extracted and reviewed. "
                 "Reviewed rows should include source, target, page, figure, curve, stress ratio, temperature, orientation, surface condition, and heat-treatment route."
             )
-            st.dataframe(sn_points, width="stretch")
+            if sn_points.empty:
+                st.info("No reviewed S-N point rows are currently available. Registered targets must be digitised and reviewed before fatigue-life fitting.")
+            else:
+                st.dataframe(sn_points, width="stretch")
     with st.expander("Show calibrated evidence table", expanded=False):
         raw_training = build_raw_training_data_table(sources, source_files, online_manifest)
         st.caption("The calibration evidence table includes source identifier, title, DOI, reference URL, AM-scope assessment, local file hash, and download status.")
@@ -1267,6 +1270,12 @@ with tab6:
         width="stretch",
     )
     st.write("Defect-sensitive fatigue is treated qualitatively until defect-size or surface-roughness measurements are added.")
+    st.markdown("#### S-N digitisation status")
+    st.write(
+        "The Evidence Base tab contains the S-N digitisation register. "
+        "Registered figures are traceable to source identifier, PDF filename, page, figure image, and review status. "
+        "Digitised points are not used for model fitting until each point has been reviewed with stress ratio, test temperature, surface condition, build orientation, and heat-treatment metadata."
+    )
     st.markdown("#### Extrapolation warning and Empirical error bounds")
     st.write(
         "The framework flags route estimates outside the reviewed calibration envelope and reports Empirical error bounds derived from calibration residuals. "
