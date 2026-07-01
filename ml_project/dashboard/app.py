@@ -665,11 +665,11 @@ with tab1:
     st.subheader("Decision Support Dossier")
     if top_row is not None:
         m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Recommended route", str(top_row["ht_class"]))
-        m2.metric("Recommendation index", f"{float(top_row['ml_assisted_score']):.2f}")
-        m3.metric("Evidence confidence", str(top_row["confidence"]))
+        m1.metric("Recommended route", str(top_row["ht_class"]), help="The highest-ranked heat treatment route based on the selected objective and constraints.")
+        m2.metric("Recommendation index", f"{float(top_row['ml_assisted_score']):.2f}", help="Composite score balancing property estimates, evidence confidence, and local feasibility.")
+        m3.metric("Evidence confidence", str(top_row["confidence"]), help="Categorical confidence derived from the number of supporting literature records.")
         occupancy = top_row.get("estimated_furnace_occupancy_h", "not assessed")
-        m4.metric("Estimated furnace occupancy", f"{float(occupancy):.1f} h" if pd.notna(occupancy) and occupancy != "not assessed" else "not assessed")
+        m4.metric("Estimated furnace occupancy", f"{float(occupancy):.1f} h" if pd.notna(occupancy) and occupancy != "not assessed" else "not assessed", help="Total expected hours of furnace time, excluding ramp rates.")
 
     with st.expander("Current input context", expanded=False):
         st.write(
@@ -938,9 +938,9 @@ with tab1:
 with tab2:
     st.subheader("Evidence Base")
     c1, c2, c3 = st.columns(3)
-    c1.metric("Curated literature sources", len(sources))
-    c2.metric("Local files with hashes", len(source_files))
-    c3.metric("AM scope assessments", len(scope))
+    c1.metric("Curated literature sources", len(sources), help="Total number of distinct papers processed in the dataset.")
+    c2.metric("Local files with hashes", len(source_files), help="Number of PDFs or data files verified locally.")
+    c3.metric("AM scope assessments", len(scope), help="Number of records evaluated for relevance to Additive Manufacturing and Inconel 718.")
     with st.expander("Show calibrated evidence table", expanded=False):
         raw_training = build_raw_training_data_table(sources, source_files, online_manifest)
         st.caption("The calibration evidence table includes source identifier, title, DOI, reference URL, AM-scope assessment, local file hash, and download status.")
@@ -1041,9 +1041,9 @@ with tab4:
     )
     if trained_model:
         p1, p2, p3 = st.columns(3)
-        p1.metric("Calibration status", trained_model.get("model_status", "not available"))
-        p2.metric("Calibration rows", trained_model.get("training_rows_total", "not available"))
-        p3.metric("Calibrated targets", len(trained_model.get("trained_targets", [])))
+        p1.metric("Calibration status", trained_model.get("model_status", "not available"), help="Indicates if the property model successfully completed its empirical fitting process.")
+        p2.metric("Calibration rows", trained_model.get("training_rows_total", "not available"), help="Total number of curated property measurements used to train the model.")
+        p3.metric("Calibrated targets", len(trained_model.get("trained_targets", [])), help="Number of static property indicators (e.g., UTS, YS) the model can estimate.")
         st.caption(
             "The calibrated model uses heat-treatment class flags, Larson-Miller thermal dose, and Arrhenius thermal activation features. "
             "Route-level property estimates are bounded to the observed calibration-property range and reported with Empirical error bounds."
@@ -1094,6 +1094,27 @@ with tab4:
                 )
             )
             st.plotly_chart(academic_layout(pred_fig, "Calibrated property estimates for candidate routes", height=520), width="stretch")
+
+            # Visualise the calibrated trade-off among strength and ductility indicators.
+            if "predicted_UTS_MPa" in route_predictions.columns and "predicted_YS_MPa" in route_predictions.columns and "predicted_elongation_pct" in route_predictions.columns:
+                scatter_3d = px.scatter_3d(
+                    route_predictions,
+                    x="predicted_UTS_MPa",
+                    y="predicted_YS_MPa",
+                    z="predicted_elongation_pct",
+                    color="ht_class",
+                    hover_name="ht_class",
+                    color_discrete_sequence=ACADEMIC_COLORS,
+                    labels={
+                        "predicted_UTS_MPa": "UTS (MPa)",
+                        "predicted_YS_MPa": "Yield Strength (MPa)",
+                        "predicted_elongation_pct": "Elongation (%)",
+                        "ht_class": "Route",
+                    },
+                )
+                scatter_3d.update_traces(marker=dict(size=8, line=dict(width=1, color='DarkSlateGrey')))
+                st.plotly_chart(academic_layout(scatter_3d, "3D Property Trade-off Landscape", height=600), width="stretch")
+
         if route_predictions.get("outside_training_envelope", pd.Series(dtype=bool)).astype(bool).any():
             st.warning("Extrapolation warning: at least one candidate route lies outside the reviewed calibration feature envelope. Treat its property estimate as a screening value only.")
         st.dataframe(route_predictions[prediction_cols], width="stretch")
