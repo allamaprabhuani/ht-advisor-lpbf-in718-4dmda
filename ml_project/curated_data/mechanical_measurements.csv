@@ -1,0 +1,17 @@
+measurement_id,condition_id,ht_id,property_type,value,unit,test_temperature_C,test_standard,n,statistic_type,uncertainty,data_origin,evidence_id,curation_status
+MEAS_0001_UTS_MPa,COND_0001,HT_0001,UTS_MPa,1365,MPa,,,,reported,,excel_seed,EVID_EXCEL_0001,curated_reviewed
+MEAS_0001_YS_MPa,COND_0001,HT_0001,YS_MPa,1034,MPa,,,,reported,,excel_seed,EVID_EXCEL_0001,curated_reviewed
+MEAS_0001_elongation_pct,COND_0001,HT_0001,elongation_pct,28.7,%,,,,reported,,excel_seed,EVID_EXCEL_0001,curated_reviewed
+MEAS_0002_UTS_MPa,COND_0002,HT_0002,UTS_MPa,1434,MPa,,,,reported,,excel_seed,EVID_EXCEL_0002,curated_reviewed
+MEAS_0002_YS_MPa,COND_0002,HT_0002,YS_MPa,1190,MPa,,,,reported,,excel_seed,EVID_EXCEL_0002,curated_reviewed
+MEAS_0003_UTS_MPa,COND_0003,HT_0003,UTS_MPa,1424,MPa,,,,reported,,excel_seed,EVID_EXCEL_0003,curated_reviewed
+MEAS_0003_hardness_HV,COND_0003,HT_0003,hardness_HV,481,HV,,,,reported,,excel_seed,EVID_EXCEL_0003,curated_reviewed
+MEAS_0005_UTS_MPa,COND_0005,HT_0005,UTS_MPa,1458,MPa,,,,reported,,excel_seed,EVID_EXCEL_0005,curated_reviewed
+MEAS_0005_YS_MPa,COND_0005,HT_0005,YS_MPa,1221,MPa,,,,reported,,excel_seed,EVID_EXCEL_0005,curated_reviewed
+MEAS_0005_elongation_pct,COND_0005,HT_0005,elongation_pct,6.2,%,,,,reported,,excel_seed,EVID_EXCEL_0005,curated_reviewed
+MEAS_0006_UTS_MPa,COND_0006,HT_0006,UTS_MPa,1426,MPa,,,,reported,,excel_seed,EVID_EXCEL_0006,curated_reviewed
+MEAS_0006_YS_MPa,COND_0006,HT_0006,YS_MPa,1060,MPa,,,,reported,,excel_seed,EVID_EXCEL_0006,curated_reviewed
+MEAS_0006_elongation_pct,COND_0006,HT_0006,elongation_pct,9.1,%,,,,reported,,excel_seed,EVID_EXCEL_0006,curated_reviewed
+MEAS_0007_UTS_MPa,COND_0007,HT_0007,UTS_MPa,1387,MPa,,,,reported,,excel_seed,EVID_EXCEL_0007,curated_reviewed
+MEAS_0007_YS_MPa,COND_0007,HT_0007,YS_MPa,1076,MPa,,,,reported,,excel_seed,EVID_EXCEL_0007,curated_reviewed
+MEAS_0007_elongation_pct,COND_0007,HT_0007,elongation_pct,7.5,%,,,,reported,,excel_seed,EVID_EXCEL_0007,curated_reviewed

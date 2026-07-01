@@ -1,0 +1,7 @@
+ht_step_id,ht_id,step_order,step_type,temperature_C,time_h,pressure_MPa,atmosphere,cooling_or_quench,thermal_dose_feature,evidence_id
+HTSTEP_0001_001,HT_0001,1,recipe_text,,,,,,,EVID_EXCEL_0001
+HTSTEP_0002_001,HT_0002,1,recipe_text,,,,,,,EVID_EXCEL_0002
+HTSTEP_0003_001,HT_0003,1,recipe_text,,,,,,,EVID_EXCEL_0003
+HTSTEP_0005_001,HT_0005,1,recipe_text,,,,,,,EVID_EXCEL_0005
+HTSTEP_0006_001,HT_0006,1,recipe_text,,,,,,,EVID_EXCEL_0006
+HTSTEP_0007_001,HT_0007,1,recipe_text,,,,,,,EVID_EXCEL_0007

@@ -1,0 +1,13 @@
+__pycache__/
+.pytest_cache/
+.DS_Store
+*.pyc
+
+# Keep publisher PDFs local unless repository permissions and copyright allow sharing.
+downloaded_pdfs/*.pdf
+ml_project/corpus_pdfs/*.pdf
+ml_project/source_pdfs/*.pdf
+
+# Local Streamlit/runtime state.
+.streamlit/secrets.toml
+

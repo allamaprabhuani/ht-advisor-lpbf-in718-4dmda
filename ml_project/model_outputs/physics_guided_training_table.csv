@@ -1,0 +1,7 @@
+source_row,ref_id,reference_url,ht_class,has_HIP,has_ST,has_DA,max_solution_temperature_C,mean_ageing_temperature_C,total_time_h,solution_larson_miller,ageing_larson_miller,thermal_activation_index,UTS_MPa,YS_MPa,elongation_pct,hardness_HV
+4,[1],https://www.sciencedirect.com/science/article/pii/S0142112319304967?casa_token=VXEg8E-SxzEAAAAA:7wedWCgttp50MRn90OrVMmHcnfmmAxNGrYsX43HED3pmi0E-aMHk9DyQqbrimSSH9s2p4HlV1jk#b0160,HIP_ST_DA,1.0,1.0,1.0,1163.0,669.5,29.0,29408.217689965644,39723.499551045184,33287.41106019803,1365.0,1034.0,28.7,
+5,[2],https://www.aerospacemanufacturinganddesign.com/article/improving-fatigue-life-of-am-components/,ST_DA,0.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1434.0,1190.0,,
+6,[4],https://www.mdpi.com/2075-4701/16/1/57,ST_DA,0.0,1.0,1.0,0.0,0.0,0.0,0.0,0.0,0.0,1424.0,,,481.0
+8,[5],https://onlinelibrary.wiley.com/doi/epdf/10.1111/ffe.14163?saml_referrer,ST_DA,0.0,1.0,1.0,980.0,670.0,9.0,25063.0,39429.4986424629,497.2469252709692,1458.0,1221.0,6.2,
+9,[5],https://onlinelibrary.wiley.com/doi/epdf/10.1111/ffe.14163?saml_referrer,HIP_ST_DA,1.0,1.0,1.0,1200.0,670.0,10.0,29906.462338112397,39429.4986424629,37942.002405255385,1426.0,1060.0,9.1,
+10,[5],https://onlinelibrary.wiley.com/doi/epdf/10.1111/ffe.14163?saml_referrer,ST_DA,0.0,1.0,1.0,1200.0,670.0,10.0,29906.462338112397,39429.4986424629,37942.002405255385,1387.0,1076.0,7.5,

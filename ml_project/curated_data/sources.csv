@@ -1,0 +1,20 @@
+source_id,title,authors,year,doi,url,publisher,source_type,peer_review_status,license_or_access_status,am_scope,recommended_model_use,exclusion_reason
+SRC001,01_ScienceDirect_S0142112319304967,,,,,,pdf,,,AM primary,yes,
+SRC002,02_AerospaceMfg_improving-fatigue-life,,,,,,pdf,,,AM article,background_only,"AM components trade article; useful context, not a clean primary experimental dataset."
+SRC003,03_MDPI_metals-16-00057,,,,,,pdf,,,mixed AM/comparator,partial,
+SRC004,04_Mackenzie_RafaelEringerCubi_thesis,,,,,,pdf,,,AM primary,yes,
+SRC005,05_Wiley_ffe14163_SanchezCamargo2023,,,,,,pdf,,,AM primary,yes,
+SRC006,06_AdditiveMfg_S2214860420308149,,,,,,pdf,,,AM primary,yes,
+SRC007,07_HAL_SP_Effect_on_brut_FA,,,,,,pdf,,,AM primary,yes,
+SRC008,08_ResearchGate_annealing_Inconel718,,,,,,pdf,,,AM primary,yes,
+SRC009,09_ScienceDirect_S0142112325002269,,,,,,pdf,,,AM primary,yes,
+SRC010,10_ScienceDirect_S0142112322005370,,,,,,pdf,,,AM primary,yes,
+SRC011,11_ScienceDirect_S074964192400264X,,,,,,pdf,,,AM primary,yes,
+SRC012,12_ScienceDirect_S1044580323007453,,,,,,pdf,,,AM primary,yes,
+SRC013,13_SSRN_4475191,,,,,,pdf,,,AM primary,yes,
+SRC015,15_ScienceDirect_S0142112323001512,,,,,,pdf,,,AM primary,yes,
+OA04,OA04_Effect_of_Homogenization_and_Solution_Treatments_Time_on_Elevated_Temperature_Mechanical_Behavior_of_Inconel_718_Fabricated_by_LPBF,,,,,,pdf,,,AM primary,yes,
+OA06,OA06_Influence_of_Heat_Treatment_on_High_Temperature_Performance_of_Inconel_718_Produced_via_LPBF,,,,,,pdf,,,AM primary,yes,
+OA08,OA08_DiVA_Alloy_718_SLM_thesis,,,,,,pdf,,,AM primary,yes,
+OA10,OA10_Tailoring_the_Strength_of_IN718_Supplementary_Materials,,,,,,pdf,,,AM supplementary,yes,
+OA12,OA12_Processing_of_Inconel_718_Matsuura_LUMEX_Research_Abstract,,,,,,pdf,,,AM industry/source,background_or_partial,"LUMEX additive/subtractive IN718 processing; useful background, weaker as peer-reviewed training data."

@@ -1,0 +1,25 @@
+source_row,alloy_am_orientation,heat_treatment_text,E_GPa,UTS_MPa,YS_MPa,elongation_pct,hardness_HV,grain_size_um,n_life_pts,R_ratio,year,ref_id,reference_url,ht_class,has_HIP,has_ST,has_DA,solution_temps_C,ageing_temps_C,all_times_h
+4,LPBF Vertical HP+ST+DA,"3h at 1163 °C and 100 Mpa --> 954 °C followed by quenching, then dual-temperature precipitation ageing at 718 °C for 8 h, followed by furnace cooling to 621 °C and holding until a combined ageing time of 18 h was achieved.",193.8,1365,1034,28.7,-,-,8,0.1,2020,[1],https://www.sciencedirect.com/science/article/pii/S0142112319304967?casa_token=VXEg8E-SxzEAAAAA:7wedWCgttp50MRn90OrVMmHcnfmmAxNGrYsX43HED3pmi0E-aMHk9DyQqbrimSSH9s2p4HlV1jk#b0160,HIP+ST+DA,1,1,1,1163,718;621,3;8;18
+5,LBPF Vertical ST+DA,,,1434,1190,-,-,-,4,0.1,2023,[2],https://www.aerospacemanufacturinganddesign.com/article/improving-fatigue-life-of-am-components/,ST+DA,0,1,1,,,
+6,LBPF Vertical ST+DA,,,1424,-,-,481,-,12,0.1,2026,[4],https://www.mdpi.com/2075-4701/16/1/57,ST+DA,0,1,1,,,
+7,LBPF Vertical ST+DA,,,,,,,,,,,,https://adelpha-api.mackenzie.br/server/api/core/bitstreams/5bc5084b-f5be-4304-a348-8bbfb90b9e8e/content,ST+DA,0,1,1,,,
+8,LBPF Vertical ST - DA,1 h at 980C + air cool--> 8 h at 720C + furnace cool to 620C --> 8 h at 620C+Air-cooled to room temperature,180,1458,1221,6.2,,,8,0.1,,[5],https://onlinelibrary.wiley.com/doi/epdf/10.1111/ffe.14163?saml_referrer,ST+DA,0,1,1,980,720;620,1;8
+9,LBPF Vertical HP+DA,"2 h of hot isostatic pressure at 1200C and 150 MPa + slow cool in HIP device --> 8 h at 720C + furnace cool to
+620C --> 8 h at 620C+Air-cooled to room temperature",203,1426,1060,9.1,,,7,0.1,,[5],https://onlinelibrary.wiley.com/doi/epdf/10.1111/ffe.14163?saml_referrer,HIP+ST+DA,1,1,1,1200,720;620,2;8
+10,LBPF Vertical ST +DA,2 h at 1200C --> 8 h at 720C + furnace cool to 620C --> 8 h at 620C+Air-cooled to room temperature,188,1387,1076,7.5,,,5,0.1,,[5],https://onlinelibrary.wiley.com/doi/epdf/10.1111/ffe.14163?saml_referrer,ST+DA,0,1,1,1200,720;620,2;8
+11,LBPF Vertical ST+DA,"980 °C for 1 h, followed by air cool (cooling rate of 100 °C/min approx.)--> Aging heat treatment at 720 °C for 8 h, furnace cool to 620 °C in 2 h, hold at 620 °C for 8 h, followed by air cool (cooling rate of 100 °C/min approx.)",-,-,-,-,-,-,6,0.1,2020,[6],https://www.sciencedirect.com/science/article/pii/S2214860420308149#abs0005,ST+DA,0,1,1,980,720;620,1;8;2
+12,LBPF Vertical HIP+ST,"980 °C for 4 h at 100 MPa followed by rapid cooling at approx. 42 °C/min. Solution heat treatment at 980 °C for 1 h, followed by air cool (cooling rate of 100 °C/min approx.)--> Aging heat treatment at 720 °C for 8 h, furnace cool to 620 °C in 2 h, hold at 620 °C for 8 h, followed by air cool (cooling rate of 100 °C/min approx.)",-,-,-,-,-,-,6,0.1,2020,[6],https://www.sciencedirect.com/science/article/pii/S2214860420308149#abs0005,HIP+ST+DA,1,1,1,980,720;620,4;1;8;2
+13,,,,,,,,,,,,7,https://hal.science/hal-04570536v1/file/SP_Effect_on_brut_FA.pdf,,0,0,0,,,
+14,,,,,,,,,,,,8,file:///C:/Users/sbrs607/Downloads/Tensile_and_Low-Cycle_Fatigue_Behavior_of_Laser_Po.pdf,,0,0,0,,,
+15,,,,,,,,,,,,9,https://www.sciencedirect.com/science/article/pii/S0142112319304967?casa_token=VXEg8E-SxzEAAAAA:7wedWCgttp50MRn90OrVMmHcnfmmAxNGrYsX43HED3pmi0E-aMHk9DyQqbrimSSH9s2p4HlV1jk,,0,0,0,,,
+16,,,,,,,,,,,,10,https://adelpha-api.mackenzie.br/server/api/core/bitstreams/5bc5084b-f5be-4304-a348-8bbfb90b9e8e/content,,0,0,0,,,
+17,,,,,,,,,,,,11,https://onlinelibrary.wiley.com/doi/epdf/10.1111/ffe.14163?saml_referrer,,0,0,0,,,
+18,,,,,,,,,,,,12,https://www.researchgate.net/publication/365752663_Effect_of_annealing_treatment_on_mechanical_and_fatigue_properties_of_Inconel_718_alloy_melted_by_selective_laser_melting/fulltext/63820a9bc2cb154d292cda99/Effect-of-annealing-treatment-on-mechanical-and-fatigue-properties-of-Inconel-718-alloy-melted-by-selective-laser-melting.pdf?origin=publication_detail&_tp=eyJjb250ZXh0Ijp7ImZpcnN0UGFnZSI6Il9kaXJlY3QiLCJwYWdlIjoicHVibGljYXRpb25Eb3dubG9hZCIsInByZXZpb3VzUGFnZSI6InB1YmxpY2F0aW9uIn19,,0,0,0,,,
+19,,,,,,,,,,,,13,file:///C:/Users/sbrs607/Downloads/MARINO-THESIS-2022-1.pdf,,0,0,0,,,
+23,,,,,,,,,,,,,https://www.mdpi.com/2075-4701/16/1/57,,0,0,0,,,
+24,,,,,,,,,,,,,https://www.sciencedirect.com/science/article/pii/S0142112325002269?casa_token=rgtL6BkJdKcAAAAA:OPDEI0vmNDd5Yp6_JXmkAR3yCbxLopKAqUSiP4fVwc0C3ua29jaPfsWN1oaX9hoTLCShQKYYe0Y#s0005,,0,0,0,,,
+25,,,,,,,,,,,,fccc,https://www.sciencedirect.com/science/article/pii/S0142112322005370,,0,0,0,,,
+26,,,,,,,,,,,,fatigue life at 650,https://www.sciencedirect.com/science/article/pii/S074964192400264X,,0,0,0,,,
+27,,,,,,,,,,,,fatigue life at 650,https://www.sciencedirect.com/science/article/pii/S1044580323007453#bb0075,,0,0,0,,,
+28,,,,,,,,,,,,fatigue life at 650,https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4475191,,0,0,0,,,
+29,,,,,,,,,,,,,https://hammer.purdue.edu/articles/thesis/The_High_Cycle_Fatigue_Response_Of_A_Topology_Optimized_Laser_Powder_Bed_Fusion_Inconel_718_Feature-Based_Component/30814061,,0,0,0,,,

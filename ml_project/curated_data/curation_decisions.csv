@@ -1,0 +1,7 @@
+decision_id,object_type,object_id,decision,reason,reviewer,date,confidence,notes
+DEC_0001,excel_seed_row,4,include,Seed row has at least one reported mechanical property and AM/LPBF context from workbook.,HT-Advisor seed builder,,medium,Requires source-level PDF verification before final publication claims.
+DEC_0002,excel_seed_row,5,include,Seed row has at least one reported mechanical property and AM/LPBF context from workbook.,HT-Advisor seed builder,,medium,Requires source-level PDF verification before final publication claims.
+DEC_0003,excel_seed_row,6,include,Seed row has at least one reported mechanical property and AM/LPBF context from workbook.,HT-Advisor seed builder,,medium,Requires source-level PDF verification before final publication claims.
+DEC_0005,excel_seed_row,8,include,Seed row has at least one reported mechanical property and AM/LPBF context from workbook.,HT-Advisor seed builder,,medium,Requires source-level PDF verification before final publication claims.
+DEC_0006,excel_seed_row,9,include,Seed row has at least one reported mechanical property and AM/LPBF context from workbook.,HT-Advisor seed builder,,medium,Requires source-level PDF verification before final publication claims.
+DEC_0007,excel_seed_row,10,include,Seed row has at least one reported mechanical property and AM/LPBF context from workbook.,HT-Advisor seed builder,,medium,Requires source-level PDF verification before final publication claims.

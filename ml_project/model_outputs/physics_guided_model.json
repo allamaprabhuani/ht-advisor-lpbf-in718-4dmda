@@ -1,0 +1,201 @@
+{
+  "model_status": "trained",
+  "model_family": "empirically calibrated parametric model",
+  "is_physics_informed_neural_network": false,
+  "training_rows_total": 6,
+  "feature_columns": [
+    "has_HIP",
+    "has_ST",
+    "has_DA",
+    "max_solution_temperature_C",
+    "mean_ageing_temperature_C",
+    "total_time_h",
+    "solution_larson_miller",
+    "ageing_larson_miller",
+    "thermal_activation_index"
+  ],
+  "feature_ranges": {
+    "has_HIP": {
+      "min": 0.0,
+      "max": 1.0
+    },
+    "has_ST": {
+      "min": 1.0,
+      "max": 1.0
+    },
+    "has_DA": {
+      "min": 1.0,
+      "max": 1.0
+    },
+    "max_solution_temperature_C": {
+      "min": 0.0,
+      "max": 1200.0
+    },
+    "mean_ageing_temperature_C": {
+      "min": 0.0,
+      "max": 670.0
+    },
+    "total_time_h": {
+      "min": 0.0,
+      "max": 29.0
+    },
+    "solution_larson_miller": {
+      "min": 0.0,
+      "max": 29906.462338112397
+    },
+    "ageing_larson_miller": {
+      "min": 0.0,
+      "max": 39723.499551045184
+    },
+    "thermal_activation_index": {
+      "min": 0.0,
+      "max": 37942.002405255385
+    }
+  },
+  "trained_targets": [
+    "UTS_MPa",
+    "YS_MPa",
+    "elongation_pct"
+  ],
+  "skipped_targets": {
+    "hardness_HV": "insufficient reviewed rows for training; available rows = 1"
+  },
+  "target_models": {
+    "UTS_MPa": {
+      "training_rows": 6,
+      "alpha": 1.0,
+      "intercept": 1415.6666666666665,
+      "coefficients": {
+        "has_HIP": 5.301617468885894,
+        "has_ST": 0.0,
+        "has_DA": 0.0,
+        "max_solution_temperature_C": 1.5999491075727104,
+        "mean_ageing_temperature_C": 6.384182864655907,
+        "total_time_h": -20.780995696926617,
+        "solution_larson_miller": 1.9083449142987798,
+        "ageing_larson_miller": 6.17297497867837,
+        "thermal_activation_index": -20.381074341055953
+      },
+      "feature_scaler": {
+        "mean": [
+          0.3333333333333333,
+          1.0,
+          1.0,
+          757.1666666666666,
+          446.5833333333333,
+          9.666666666666666,
+          19047.35706103174,
+          26335.332579738984,
+          18278.110465996626
+        ],
+        "scale": [
+          0.4714045207910317,
+          1.0,
+          1.0,
+          540.5492320059499,
+          315.78215284520996,
+          9.672412085697939,
+          13570.675184625516,
+          18622.182353567252,
+          18179.448787908117
+        ]
+      },
+      "training_rmse": 11.369989725252411,
+      "observed_min": 1365.0,
+      "observed_max": 1458.0
+    },
+    "YS_MPa": {
+      "training_rows": 5,
+      "alpha": 1.0,
+      "intercept": 1116.2,
+      "coefficients": {
+        "has_HIP": -15.55138481188471,
+        "has_ST": 0.0,
+        "has_DA": 0.0,
+        "max_solution_temperature_C": -4.465311428280168,
+        "mean_ageing_temperature_C": 7.0371559858647155,
+        "total_time_h": -15.39909130148047,
+        "solution_larson_miller": -3.2875095911901138,
+        "ageing_larson_miller": 6.863087755422686,
+        "thermal_activation_index": -46.697899546729786
+      },
+      "feature_scaler": {
+        "mean": [
+          0.4,
+          1.0,
+          1.0,
+          908.6,
+          535.9,
+          11.6,
+          22856.82847323809,
+          31602.399095686782,
+          21933.732559195952
+        ],
+        "scale": [
+          0.48989794855663565,
+          1.0,
+          1.0,
+          461.5623901489375,
+          267.9500699757326,
+          9.478396488858229,
+          11572.529339665913,
+          15801.609811373752,
+          17787.900172557933
+        ]
+      },
+      "training_rmse": 14.049734826003304,
+      "observed_min": 1034.0,
+      "observed_max": 1221.0
+    },
+    "elongation_pct": {
+      "training_rows": 4,
+      "alpha": 1.0,
+      "intercept": 12.875000000000075,
+      "coefficients": {
+        "has_HIP": 0.9811005685343389,
+        "has_ST": 0.0,
+        "has_DA": 0.0,
+        "max_solution_temperature_C": 0.04998001083772266,
+        "mean_ageing_temperature_C": -2.614647193509395,
+        "total_time_h": 2.5917066106513995,
+        "solution_larson_miller": 0.2252368549540629,
+        "ageing_larson_miller": 2.6146471935093976,
+        "thermal_activation_index": 0.16833342497872608
+      },
+      "feature_scaler": {
+        "mean": [
+          0.5,
+          1.0,
+          1.0,
+          1135.75,
+          669.875,
+          14.5,
+          28571.03559154761,
+          39502.99886960848,
+          27417.16569899494
+        ],
+        "scale": [
+          0.5,
+          1.0,
+          1.0,
+          91.18216656781084,
+          0.21650635094610965,
+          8.381527307120106,
+          2035.553780200712,
+          127.30612778398135,
+          15657.954709759486
+        ]
+      },
+      "training_rmse": 0.673824192733168,
+      "observed_min": 6.2,
+      "observed_max": 28.7
+    }
+  },
+  "physics_equations": {
+    "larson_miller_parameter": "P = T_K * (C + log10(t_h))",
+    "arrhenius_thermal_activation": "A = sum[t_h * exp((-Q/R) * (1/T_K - 1/T_ref))]",
+    "basquin_law": "sigma_a = sigma_f_prime * (2Nf)^b",
+    "defect_sensitive_fatigue_basis": "fatigue risk increases with near-surface defects, roughness, and stress concentration; Murakami sqrt(area) treatment can be added when defect-size data are available"
+  },
+  "scope_statement": "The fitted model is calibrated on reviewed LPBF/SLM Inconel 718 property rows (n = 6). It estimates static tensile indicators where data are sufficient and uses fatigue physics qualitatively until condition-level S-N data are curated. The model does not explicitly resolve delta-phase fraction, Laves-phase dissolution, precipitate morphology, or defect-size distributions."
+}

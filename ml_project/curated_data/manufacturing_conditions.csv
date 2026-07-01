@@ -1,0 +1,7 @@
+condition_id,source_id,alloy,am_process,machine_make_model,eos_like_flag,powder_supplier,composition_source,build_orientation,process_parameters,surface_state,specimen_geometry,evidence_id
+COND_0001,EXCEL_REF_[1],Inconel 718,LPBF/SLM,,,,,vertical,,,,EVID_EXCEL_0001
+COND_0002,EXCEL_REF_[2],Inconel 718,LPBF/SLM,,,,,vertical,,,,EVID_EXCEL_0002
+COND_0003,EXCEL_REF_[4],Inconel 718,LPBF/SLM,,,,,vertical,,,,EVID_EXCEL_0003
+COND_0005,EXCEL_REF_[5],Inconel 718,LPBF/SLM,,,,,vertical,,,,EVID_EXCEL_0005
+COND_0006,EXCEL_REF_[5],Inconel 718,LPBF/SLM,,,,,vertical,,,,EVID_EXCEL_0006
+COND_0007,EXCEL_REF_[5],Inconel 718,LPBF/SLM,,,,,vertical,,,,EVID_EXCEL_0007
