@@ -115,6 +115,84 @@ FEASIBILITY_COLORS = {
     "limited by selected furnace range": "#a44a3f",
 }
 
+INPUT_HELP = {
+    "target": (
+        "Select the property objective used to weight the route ranking. "
+        "Balanced combines strength, ductility, evidence support, and feasibility. "
+        "Fatigue keeps fatigue-risk modifiers visible but does not fit S-N life. "
+        "Strength gives more weight to calibrated UTS and yield-strength estimates. "
+        "Ductility gives more weight to calibrated elongation estimates."
+    ),
+    "initial_state": (
+        "Initial condition of the ESOS LPBF Inconel 718 specimens before the proposed heat treatment. "
+        "As-built indicates no prior thermal relief. Stress relieved indicates residual-stress reduction before the selected route. "
+        "Machined indicates surface removal that can reduce roughness-driven fatigue scatter."
+    ),
+    "section_size": (
+        "Representative section size affects thermal-gradient risk and cycle-time interpretation. "
+        "Thin sections are less likely to require extended soak allowances. Moderate sections represent typical test coupons. "
+        "Large thermal mass flags possible temperature-lag and cooling-uniformity concerns. Use not specified when dimensions are not yet fixed."
+    ),
+    "surface_condition": (
+        "Surface condition is retained because fatigue response is sensitive to roughness and near-surface defects. "
+        "Machined and polished states reduce surface-driven scatter relative to as-built surfaces. "
+        "Use not specified only when the final test surface has not been decided."
+    ),
+    "allow_hip": (
+        "Use this switch only when HIP is being considered as a literature benchmark. "
+        "Leave it off for the planned local route because HIP is not available locally. "
+        "Turning it on allows HIP routes to appear as comparison cases, not as primary recommendations."
+    ),
+    "mode": (
+        "Decision posture controls how strongly the framework penalises limited evidence and local constraints. "
+        "Conservative favours better-supported routes. Balanced is the default compromise. "
+        "Exploratory allows narrower-evidence routes when they may be scientifically informative."
+    ),
+    "furnace_limit": (
+        "Available furnace range is used to penalise routes that exceed local equipment capability. "
+        "Up to 980 C favours lower-temperature solution or ageing routes. Up to 1065 C allows standard non-HIP solution treatment. "
+        "Up to 1100 C allows higher homogenisation-style schedules. Use not specified only for early planning."
+    ),
+    "build_orientation": (
+        "Build orientation is retained as a fatigue-risk modifier. "
+        "Vertical, horizontal, and mixed orientations can show different defect alignment, surface exposure, and fatigue scatter. "
+        "The current model records the orientation for risk interpretation rather than fitting orientation-specific fatigue life."
+    ),
+    "furnace_limit_C": (
+        "Maximum furnace temperature available for practical validation. "
+        "The framework compares this value with each route's maximum treatment temperature and applies feasibility penalties when the route exceeds local capability."
+    ),
+    "maximum_cycle_hours": (
+        "Maximum total hold time that can be scheduled for a single heat-treatment route. "
+        "This is used to penalise long homogenisation or HIP-style schedules and to estimate practical furnace occupancy."
+    ),
+    "target_life_cycles": (
+        "Target fatigue life is used only as a validation objective. "
+        "The current model does not infer fatigue life from tensile properties; fatigue claims require local S-N testing and defect characterisation."
+    ),
+    "cooling_condition": (
+        "Cooling condition affects residual stress relief, precipitation response, and practical repeatability. "
+        "Controlled furnace cooling is conservative and repeatable. Air cooling is practical for many non-HIP routes. "
+        "Water quenching may alter residual stress and distortion risk and should be recorded explicitly."
+    ),
+    "chemistry_record": (
+        "Enable this only when composition values will be recorded for the experimental batch. "
+        "These values are retained for traceability and later model expansion; they do not currently override the calibrated property estimates."
+    ),
+    "niobium": (
+        "Nb + Ta content is relevant to Laves/Nb-rich segregation and gamma-double-prime strengthening. "
+        "Record the nominal powder or certificate value when available."
+    ),
+    "aluminium": (
+        "Al contributes to gamma-prime precipitation. "
+        "Record it with Ti and Nb so later analysis can separate composition effects from heat-treatment effects."
+    ),
+    "titanium": (
+        "Ti contributes to gamma-prime precipitation and should be recorded with Al and Nb when available. "
+        "The current route ranking stores this value for traceability and future calibration."
+    ),
+}
+
 
 def academic_layout(fig: go.Figure, title: str) -> go.Figure:
     fig.update_layout(
@@ -144,39 +222,124 @@ with tab1:
     st.markdown("#### Required input context")
     left, right = st.columns(2)
     with left:
-        target = st.selectbox("Primary design objective", ["balanced", "fatigue", "strength", "ductility"])
-        initial_state = st.selectbox("Initial material state", ["EOS-like LPBF, as-built", "EOS-like LPBF, stress relieved", "EOS-like LPBF, machined"])
-        section_size = st.selectbox("Representative section size", ["thin section", "moderate section", "large thermal mass", "not specified"], index=3)
-        surface_condition = st.selectbox("Surface condition", ["machined", "polished", "as-built", "not specified"])
+        target = st.selectbox(
+            "Primary design objective",
+            ["balanced", "fatigue", "strength", "ductility"],
+            help=INPUT_HELP["target"],
+        )
+        initial_state = st.selectbox(
+            "Initial material state",
+            ["EOS-like LPBF, as-built", "EOS-like LPBF, stress relieved", "EOS-like LPBF, machined"],
+            help=INPUT_HELP["initial_state"],
+        )
+        section_size = st.selectbox(
+            "Representative section size",
+            ["thin section", "moderate section", "large thermal mass", "not specified"],
+            index=3,
+            help=INPUT_HELP["section_size"],
+        )
+        surface_condition = st.selectbox(
+            "Surface condition",
+            ["machined", "polished", "as-built", "not specified"],
+            help=INPUT_HELP["surface_condition"],
+        )
     with right:
-        allow_hip = st.toggle("Include HIP benchmark routes", value=False, help="Local experimental work proceeds without HIP; enable this only for comparison with literature benchmarks.")
-        mode = st.selectbox("Decision posture", ["conservative", "balanced", "exploratory"], index=1)
-        furnace_limit = st.selectbox("Available furnace range", ["up to 980 C", "up to 1065 C", "up to 1100 C", "not specified"], index=3)
-        build_orientation = st.selectbox("Build orientation", ["vertical", "horizontal", "mixed", "not specified"])
+        allow_hip = st.toggle(
+            "Include HIP benchmark routes",
+            value=False,
+            help=INPUT_HELP["allow_hip"],
+        )
+        mode = st.selectbox(
+            "Decision posture",
+            ["conservative", "balanced", "exploratory"],
+            index=1,
+            help=INPUT_HELP["mode"],
+        )
+        furnace_limit = st.selectbox(
+            "Available furnace range",
+            ["up to 980 C", "up to 1065 C", "up to 1100 C", "not specified"],
+            index=3,
+            help=INPUT_HELP["furnace_limit"],
+        )
+        build_orientation = st.selectbox(
+            "Build orientation",
+            ["vertical", "horizontal", "mixed", "not specified"],
+            help=INPUT_HELP["build_orientation"],
+        )
 
     st.markdown("#### Manual experimental inputs")
     furnace_defaults = {"up to 980 C": 980, "up to 1065 C": 1065, "up to 1100 C": 1100, "not specified": 1100}
     m1, m2, m3 = st.columns(3)
     with m1:
-        furnace_limit_C = st.number_input("Maximum furnace temperature (C)", min_value=600, max_value=1250, value=furnace_defaults[furnace_limit], step=5)
+        furnace_limit_C = st.number_input(
+            "Maximum furnace temperature (C)",
+            min_value=600,
+            max_value=1250,
+            value=furnace_defaults[furnace_limit],
+            step=5,
+            help=INPUT_HELP["furnace_limit_C"],
+        )
     with m2:
-        maximum_cycle_hours = st.number_input("Maximum practical cycle time (h)", min_value=1.0, max_value=96.0, value=20.0, step=1.0)
+        maximum_cycle_hours = st.number_input(
+            "Maximum practical cycle time (h)",
+            min_value=1.0,
+            max_value=96.0,
+            value=20.0,
+            step=1.0,
+            help=INPUT_HELP["maximum_cycle_hours"],
+        )
     with m3:
-        target_life_cycles = st.number_input("Target fatigue life, if applicable (cycles)", min_value=0, max_value=100000000, value=1000000, step=100000)
+        target_life_cycles = st.number_input(
+            "Target fatigue life, if applicable (cycles)",
+            min_value=0,
+            max_value=100000000,
+            value=1000000,
+            step=100000,
+            help=INPUT_HELP["target_life_cycles"],
+        )
     m4, m5 = st.columns(2)
     with m4:
-        cooling_condition = st.selectbox("Cooling condition available", ["controlled furnace cooling", "air cooling", "water quench", "not specified"])
+        cooling_condition = st.selectbox(
+            "Cooling condition available",
+            ["controlled furnace cooling", "air cooling", "water quench", "not specified"],
+            help=INPUT_HELP["cooling_condition"],
+        )
     with m5:
-        chemistry_record = st.toggle("Record nominal chemistry inputs", value=False)
+        chemistry_record = st.toggle(
+            "Record nominal chemistry inputs",
+            value=False,
+            help=INPUT_HELP["chemistry_record"],
+        )
     niobium = aluminium = titanium = None
     if chemistry_record:
         c1, c2, c3 = st.columns(3)
         with c1:
-            niobium = st.number_input("Nb + Ta (wt.%)", min_value=0.0, max_value=8.0, value=5.1, step=0.1)
+            niobium = st.number_input(
+                "Nb + Ta (wt.%)",
+                min_value=0.0,
+                max_value=8.0,
+                value=5.1,
+                step=0.1,
+                help=INPUT_HELP["niobium"],
+            )
         with c2:
-            aluminium = st.number_input("Al (wt.%)", min_value=0.0, max_value=2.0, value=0.5, step=0.05)
+            aluminium = st.number_input(
+                "Al (wt.%)",
+                min_value=0.0,
+                max_value=2.0,
+                value=0.5,
+                step=0.05,
+                help=INPUT_HELP["aluminium"],
+            )
         with c3:
-            titanium = st.number_input("Ti (wt.%)", min_value=0.0, max_value=2.0, value=1.0, step=0.05)
+            titanium = st.number_input(
+                "Ti (wt.%)",
+                min_value=0.0,
+                max_value=2.0,
+                value=1.0,
+                step=0.05,
+                help=INPUT_HELP["titanium"],
+            )
 
     manual_context = ManualInputContext(
         furnace_limit_C=int(furnace_limit_C),

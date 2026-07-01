@@ -46,6 +46,29 @@ def test_dashboard_exposes_manual_inputs_and_auditable_model_views():
         assert phrase in APP_TEXT
 
 
+def test_dashboard_input_controls_include_detailed_help_text():
+    required = [
+        "Select the property objective used to weight the route ranking.",
+        "Initial condition of the ESOS LPBF Inconel 718 specimens before the proposed heat treatment.",
+        "Representative section size affects thermal-gradient risk and cycle-time interpretation.",
+        "Surface condition is retained because fatigue response is sensitive to roughness and near-surface defects.",
+        "Use this switch only when HIP is being considered as a literature benchmark.",
+        "Decision posture controls how strongly the framework penalises limited evidence and local constraints.",
+        "Available furnace range is used to penalise routes that exceed local equipment capability.",
+        "Build orientation is retained as a fatigue-risk modifier.",
+        "Maximum furnace temperature available for practical validation.",
+        "Maximum total hold time that can be scheduled for a single heat-treatment route.",
+        "Target fatigue life is used only as a validation objective.",
+        "Cooling condition affects residual stress relief, precipitation response, and practical repeatability.",
+        "Enable this only when composition values will be recorded for the experimental batch.",
+        "Nb + Ta content is relevant to Laves/Nb-rich segregation and gamma-double-prime strengthening.",
+        "Al contributes to gamma-prime precipitation.",
+        "Ti contributes to gamma-prime precipitation and should be recorded with Al and Nb when available.",
+    ]
+    for phrase in required:
+        assert phrase in APP_TEXT
+
+
 def test_dashboard_exposes_help_and_trained_model_status():
     required = [
         "Help and Scientific Basis",
