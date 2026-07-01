@@ -384,7 +384,7 @@ INPUT_HELP = {
         "Ductility gives more weight to calibrated elongation estimates."
     ),
     "initial_state": (
-        "Initial condition of the ESOS LPBF Inconel 718 specimens before the proposed heat treatment. "
+        "Initial condition of the EOS LPBF Inconel 718 specimens before the proposed heat treatment. "
         "As-built indicates no prior thermal relief. Stress relieved indicates residual-stress reduction before the selected route. "
         "Machined indicates surface removal that can reduce roughness-driven fatigue scatter."
     ),
@@ -1134,7 +1134,7 @@ with tab5:
         """
         1. Include an as-built baseline.
         2. Include an AMS-style standard baseline.
-        3. Apply the framework-recommended non-HIP route to ESOS LPBF Inconel 718 specimens.
+        3. Apply the framework-recommended non-HIP route to EOS LPBF Inconel 718 specimens.
         4. Measure hardness and tensile properties.
         5. Perform SEM/EDS microstructural assessment for Laves/Nb-rich segregation and heat-treatment response.
         6. Add fatigue screening only when specimen count and machine time allow; fatigue is defect-controlled and cannot be inferred from static tensile indicators alone.
@@ -1212,7 +1212,7 @@ with tab6:
     st.markdown("#### Practical interpretation")
     st.write(
         "The tool is theoretically and manufacturingly practical as a route-selection and validation-planning aid. "
-        "It is not a replacement for specimen testing. Recommended schedules should be validated on local ESOS LPBF Inconel 718 specimens before any property claim is made."
+        "It is not a replacement for specimen testing. Recommended schedules should be validated on local EOS LPBF Inconel 718 specimens before any property claim is made."
     )
     st.markdown("#### Supporting literature for recommendation")
     st.write(

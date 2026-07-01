@@ -50,7 +50,7 @@ def test_dashboard_exposes_manual_inputs_and_auditable_model_views():
 def test_dashboard_input_controls_include_detailed_help_text():
     required = [
         "Select the property objective used to weight the route ranking.",
-        "Initial condition of the ESOS LPBF Inconel 718 specimens before the proposed heat treatment.",
+        "Initial condition of the EOS LPBF Inconel 718 specimens before the proposed heat treatment.",
         "Representative section size affects thermal-gradient risk and cycle-time interpretation.",
         "Surface condition is retained because fatigue response is sensitive to roughness and near-surface defects.",
         "Use this switch only when HIP is being considered as a literature benchmark.",
