@@ -2,11 +2,16 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import sys
 
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from ml_project.ht_advisor.dashboard_data import build_process_window_rows, build_property_tradeoff_rows
 from ml_project.ht_advisor.expert_system import (
@@ -21,7 +26,6 @@ from ml_project.ht_advisor.literature_evidence import build_recommendation_liter
 from ml_project.ht_advisor.physics_guided_model import build_help_sections
 from ml_project.ht_advisor.physics_guided_model import apply_ml_property_ranking
 
-ROOT = Path(__file__).resolve().parents[2]
 CURATED = ROOT / "ml_project" / "curated_data"
 OUTPUTS = ROOT / "ml_project" / "model_outputs"
 EXTRACTED = ROOT / "ml_project" / "extracted_data"
