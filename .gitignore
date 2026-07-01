@@ -8,6 +8,10 @@ downloaded_pdfs/*.pdf
 ml_project/corpus_pdfs/*.pdf
 ml_project/source_pdfs/*.pdf
 ml_project/source_pdfs/**/*.pdf
+ml_project/figures/**/*.png
+ml_project/figures/**/*.jpg
+ml_project/figures/**/*.jpeg
+ml_project/figures/**/*.cal.json
 ml_project/extracted_data/text/
 ml_project/extracted_data/tables/
 ml_project/extracted_data/candidate_*.csv

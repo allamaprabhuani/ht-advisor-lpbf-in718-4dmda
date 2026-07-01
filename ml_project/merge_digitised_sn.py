@@ -86,6 +86,7 @@ def main():
                     {
                         "sn_point_id": f"{target_id}-{idx:04d}",
                         "source_type": "literature_digitised",
+                        "target_id": target_id,
                         "source_id": target["source_id"],
                         "source_pdf": target["source_pdf"],
                         "source_page": target["source_page"],
@@ -93,14 +94,20 @@ def main():
                         "curve_id": "",
                         "condition_id": "",
                         "point_index": idx,
-                        "alloy": target["material_alloy"],
+                        "alloy": "Inconel 718",
                         "test_type": "fatigue",
                         "stress_metric_digitised": target["y_axis_label"],
+                        "stress_ratio_R": target.get("stress_ratio_R", ""),
+                        "test_temperature_C": target.get("test_temperature_C", ""),
+                        "build_orientation": target.get("build_orientation", ""),
+                        "surface_condition": target.get("surface_condition", ""),
+                        "heat_treatment_class": target.get("heat_treatment_class", ""),
                         "cycles_to_failure": cycles,
                         "log10_cycles_to_failure": log10_or_blank(cycles),
                         "data_origin": str(csv_path),
                         "data_status": "digitised_needs_metadata",
-                        "notes": "Merged from digitize_sn.py output; condition metadata requires manual assignment.",
+                        "review_status": "needs_review",
+                        "notes": "Merged from digitize_sn.py output; condition metadata requires manual assignment and source-level review.",
                     }
                 )
                 y_label = target["y_axis_label"].lower()

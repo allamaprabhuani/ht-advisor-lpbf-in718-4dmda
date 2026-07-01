@@ -46,6 +46,7 @@ CURATED = ROOT / "ml_project" / "curated_data"
 OUTPUTS = ROOT / "ml_project" / "model_outputs"
 EXTRACTED = ROOT / "ml_project" / "extracted_data"
 LITERATURE = ROOT / "ml_project" / "literature_search"
+DATA = ROOT / "ml_project" / "data"
 
 st.set_page_config(page_title="HT-Advisor", layout="wide")
 st.markdown(
@@ -162,6 +163,8 @@ online_manifest_path = LITERATURE / "final_online_source_manifest.csv"
 trained_model_path = OUTPUTS / "physics_guided_model.json"
 route_predictions_path = OUTPUTS / "route_property_predictions.csv"
 training_table_path = OUTPUTS / "physics_guided_training_table.csv"
+sn_targets_path = DATA / "sn_digitisation_targets.csv"
+sn_points_path = DATA / "sn_curve_points.csv"
 
 recs = load_csv(recs_path, file_fingerprint(recs_path))
 sources = load_csv(sources_path, file_fingerprint(sources_path))
@@ -173,6 +176,8 @@ online_manifest = load_csv(online_manifest_path, file_fingerprint(online_manifes
 trained_model = load_json(trained_model_path, file_fingerprint(trained_model_path))
 route_predictions = load_csv(route_predictions_path, file_fingerprint(route_predictions_path))
 training_table = load_csv(training_table_path, file_fingerprint(training_table_path))
+sn_targets = load_csv(sn_targets_path, file_fingerprint(sn_targets_path))
+sn_points = load_csv(sn_points_path, file_fingerprint(sn_points_path))
 supporting_literature = build_supporting_literature_table()
 
 ACADEMIC_COLORS = ["#2f5d62", "#5b7f95", "#8a6f3d", "#6b7280", "#a44a3f", "#7d8f69"]
@@ -959,6 +964,32 @@ with tab2:
     c1.metric("Curated literature sources", len(sources), help="Total number of distinct papers processed in the dataset.")
     c2.metric("Local files with hashes", len(source_files), help="Number of PDFs or data files verified locally.")
     c3.metric("AM scope assessments", len(scope), help="Number of records evaluated for relevance to Additive Manufacturing and Inconel 718.")
+    if not sn_targets.empty:
+        st.divider()
+        s1, s2, s3 = st.columns(3)
+        saved_figures = int(sn_targets["digitisation_status"].astype(str).str.contains("figure_saved", na=False).sum())
+        reviewed_points = int(sn_points["review_status"].astype(str).str.contains("reviewed", case=False, na=False).sum()) if "review_status" in sn_points else 0
+        s1.metric("Registered S-N targets", len(sn_targets), help="Candidate or confirmed fatigue figures registered for point-level digitisation.")
+        s2.metric("Saved S-N figure images", saved_figures, help="Registered targets that already have a local snipped figure image.")
+        s3.metric("Reviewed S-N points", reviewed_points, help="Digitised fatigue points that have passed manual metadata review.")
+        with st.expander("S-N digitisation register", expanded=False):
+            st.caption(
+                "This register tracks fatigue figures before they are used as model data. "
+                "Each target retains source identifier, PDF filename, page, figure status, axis interpretation, and review status."
+            )
+            st.dataframe(sn_targets, width="stretch")
+            st.download_button(
+                "Download S-N target register",
+                sn_targets.to_csv(index=False).encode("utf-8"),
+                file_name="sn_digitisation_targets.csv",
+                mime="text/csv",
+            )
+        with st.expander("Digitised S-N point data", expanded=False):
+            st.caption(
+                "Point rows remain empty until marker-level data are extracted and reviewed. "
+                "Reviewed rows should include source, target, page, figure, curve, stress ratio, temperature, orientation, surface condition, and heat-treatment route."
+            )
+            st.dataframe(sn_points, width="stretch")
     with st.expander("Show calibrated evidence table", expanded=False):
         raw_training = build_raw_training_data_table(sources, source_files, online_manifest)
         st.caption("The calibration evidence table includes source identifier, title, DOI, reference URL, AM-scope assessment, local file hash, and download status.")
