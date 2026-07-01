@@ -7,7 +7,11 @@ __pycache__/
 downloaded_pdfs/*.pdf
 ml_project/corpus_pdfs/*.pdf
 ml_project/source_pdfs/*.pdf
+ml_project/source_pdfs/**/*.pdf
+ml_project/extracted_data/text/
+ml_project/extracted_data/tables/
+ml_project/extracted_data/candidate_*.csv
+ml_project/extracted_data/am_only_candidate_*.csv
 
 # Local Streamlit/runtime state.
 .streamlit/secrets.toml
-

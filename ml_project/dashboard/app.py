@@ -963,7 +963,7 @@ with tab2:
         st.dataframe(scope, width="stretch")
     with st.expander("Supporting literature used for recommendation notes"):
         st.caption(
-            "These papers support interpretation of ML fatigue methods and build-orientation effects. "
+            "These papers support interpretation of ML fatigue methods, build-orientation effects, surface-condition sensitivity, and heat-treatment route selection. "
             "They are not direct calibration rows unless their condition-level data are later digitised and reviewed."
         )
         st.dataframe(
@@ -1216,12 +1216,14 @@ with tab6:
     )
     st.markdown("#### Supporting literature for recommendation")
     st.write(
-        "Song et al. 2025 (10.3390/ma18112604) is used to justify the requirement for stress-amplitude and defect descriptors before claiming fitted ML fatigue-life prediction. "
-        "Jirandehi et al. 2022 (10.1016/j.addma.2022.102661) is used to justify retaining build orientation as a fatigue-risk modifier."
+        "The supporting literature table includes ML-fatigue methodology, build-orientation and surface-condition fatigue evidence, and newly extracted LPBF/SLM Inconel 718 heat-treatment studies. "
+        "For example, Song et al. 2025 (10.3390/ma18112604) supports the need for stress-amplitude and defect descriptors before fitted fatigue-life prediction, "
+        "and Jirandehi et al. 2022 (10.1016/j.addma.2022.102661) supports retaining build orientation as a fatigue-risk variable. "
+        "These sources strengthen the expert-system rationale, but they are not treated as direct calibration rows until condition-level values are curated into the training table."
     )
     st.write(
         "Extracted results: Song et al. reported GAN-RF as the strongest tested fatigue-life model "
-        "(R2 = 0.975, MAE = 1.13 percent), while Jirandehi et al. reported orientation-dependent fatigue damage in LB-PBF Inconel 718."
+        "(R2 = 0.975, MAE = 1.13 percent). The expanded literature set supports keeping heat-treatment route, starting state, surface condition, build orientation, and local validation as explicit parts of the recommendation."
     )
     st.dataframe(
         supporting_literature[["display_citation", "title", "doi", "url", "extracted_result", "recommendation_implication"]],

@@ -20,8 +20,8 @@ BASE_ROUTES = {
         "ductility": 0.55,
         "fatigue": 0.55,
         "cost": 0.20,
-        "evidence": 2,
-        "reason": "Lower-cost ageing route for comparison; residual AM defects and microstructural heterogeneity may remain influential.",
+        "evidence": 3,
+        "reason": "Lower-cost ageing route for comparison; residual AM defects and microstructural heterogeneity may remain influential, so this route is best retained as a baseline rather than the primary validation route.",
     },
     "ST_DA": {
         "window": "Solution treatment about 980-1095 C for 1-2 h, then ageing about 720 C/8 h and 620 C/8 h",
@@ -29,8 +29,8 @@ BASE_ROUTES = {
         "ductility": 0.70,
         "fatigue": 0.72,
         "cost": 0.45,
-        "evidence": 6,
-        "reason": "Literature-supported non-HIP route that balances precipitation strengthening and ductility in LPBF Inconel 718.",
+        "evidence": 12,
+        "reason": "Best-supported non-HIP route in the expanded LPBF/SLM Inconel 718 evidence set; it balances precipitation strengthening, retained ductility, and practical furnace accessibility.",
     },
     "HIP_DA": {
         "window": "HIP about 1160-1200 C followed by ageing sequence near 720 C and 620 C",
@@ -38,7 +38,7 @@ BASE_ROUTES = {
         "ductility": 0.75,
         "fatigue": 0.86,
         "cost": 0.80,
-        "evidence": 3,
+        "evidence": 4,
         "reason": "Defect closure may improve fatigue response where porosity controls failure; retained as a benchmark because HIP is not locally available.",
     },
     "HIP_ST_DA": {
@@ -47,7 +47,7 @@ BASE_ROUTES = {
         "ductility": 0.82,
         "fatigue": 0.92,
         "cost": 0.95,
-        "evidence": 3,
+        "evidence": 4,
         "reason": "Fatigue-oriented benchmark route when HIP access is available; retained for comparison with locally feasible non-HIP treatments.",
     },
     "HA_ST_DA": {
@@ -56,8 +56,8 @@ BASE_ROUTES = {
         "ductility": 0.78,
         "fatigue": 0.74,
         "cost": 0.70,
-        "evidence": 2,
-        "reason": "Relevant where segregation and Laves-phase control are central considerations; current evidence support is comparatively narrow.",
+        "evidence": 5,
+        "reason": "Relevant where segregation and Laves-phase control are central considerations; the expanded corpus supports homogenisation and solution-time sensitivity, but the longer furnace cycle requires local validation.",
     },
     "CUSTOM_ST_DA": {
         "window": "Short-cycle solution treatment within the observed 980-1065 C range, followed by standard double ageing near 720 C and 620 C",
@@ -65,8 +65,8 @@ BASE_ROUTES = {
         "ductility": 0.68,
         "fatigue": 0.68,
         "cost": 0.38,
-        "evidence": 2,
-        "reason": "Locally feasible non-HIP route for validation under available furnace constraints; evidence support remains limited and requires experimental confirmation.",
+        "evidence": 5,
+        "reason": "Locally feasible non-HIP route for validation under available furnace constraints; the expanded evidence base supports solution-plus-ageing sensitivity, but the exact shortened schedule remains an experimental candidate.",
     },
 }
 

@@ -39,3 +39,15 @@
 - Mixed LPBF-versus-forged/rolled rows are retained but marked with `manual_filter_note` when comparator terms appear.
 - Machine scan created: `machine_term_scan.csv`; several sources use EOS/EOSINT M270/M280/M290 machines, which is useful for aligning to your EOS LPBF validation.
 - Manual download priority list: `manual_download_recommendations.csv`.
+
+## 2026-07-01 PDF intake update
+
+- New PDFs staged from `~/Downloads`: 17 files.
+- Intake manifest with original filenames, stable filenames, byte counts, and SHA-256 hashes: `ml_project/source_pdfs/intake_20260701_downloads_manifest.csv`.
+- Local intake folder: `ml_project/source_pdfs/intake_20260701_downloads/`.
+- Corpus after intake: 36 PDFs.
+- Extraction rerun produced: 301 heat-treatment candidate rows, 1440 mechanical-property candidate rows, 833 fatigue candidate rows, and 95 extracted tables.
+- Core new heat-treatment/mechanical evidence sources include `NEW04`, `NEW08`, `NEW10`, `NEW11`, `NEW12`, `NEW14`, and `NEW15`.
+- Lower-confidence or partial-use additions include `NEW16` as a preprint and `NEW17` as thesis/grey literature.
+- Fatigue-context additions include `NEW02`, `NEW03`, `NEW05`, `NEW10`, `NEW11`, `NEW16`, and `NEW17`; these support risk interpretation and future S-N curation but are not yet fitted as fatigue-life training rows.
+- The property model remains calibrated from the reviewed seed table until condition-level values from the new PDFs are curated into one row per heat-treatment condition.

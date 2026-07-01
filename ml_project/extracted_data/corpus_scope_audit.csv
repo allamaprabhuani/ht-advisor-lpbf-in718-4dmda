@@ -18,3 +18,20 @@ OA06_Influence_of_Heat_Treatment_on_High_Temperature_Performance_of_Inconel_718_
 OA08_DiVA_Alloy_718_SLM_thesis.pdf,AM primary,yes,Alloy 718 manufactured by AM selective laser melting.
 OA10_Tailoring_the_Strength_of_IN718_Supplementary_Materials.pdf,AM supplementary,yes,Supplementary material for IN718 LPBF strength tailoring; use if linked to main paper fields.
 OA12_Processing_of_Inconel_718_Matsuura_LUMEX_Research_Abstract.pdf,AM industry/source,background_or_partial,"LUMEX additive/subtractive IN718 processing; useful background, weaker as peer-reviewed training data."
+NEW01_wang2015.pdf,AM review/background,background_only,"Powder-bed laser additive manufacturing review for Inconel 718; useful context, not condition-level heat-treatment evidence."
+NEW02_watring2019.pdf,AM primary,partial,"LPBF IN718 high-cycle fatigue baseline; as-built/fatigue mechanism evidence, not a heat-treatment route training row."
+NEW03_kim2020.pdf,AM primary,partial,LPBF IN718 fatigue crack-growth evidence at room/elevated temperature; useful fatigue-risk context.
+NEW04_Microstructural_evolution_and_mechanical_properties_of_Inconel_718_alloy_manufactured_by.pdf,AM primary,yes,SLM IN718 solution treatment and double ageing with microstructural and mechanical-property evidence.
+NEW05_witkin2020.pdf,AM primary,partial,LPBF IN718 fatigue evidence for surface condition and specimen orientation; use as fatigue modifier support.
+NEW06_Effect_of_Scan_Speed_and_Laser_Power_on_the_Nature_of_Defects_Microstructures_and_Microhar.pdf,AM primary,background_or_partial,"SLM/3D printed IN718 process-parameter, defect, microstructure, and microhardness evidence; not direct HT route evidence."
+NEW07_Simultaneous_consideration_of_relative_density_energy_consumption_and_build_time_for_selec.pdf,AM process optimisation,background_only,SLM IN718 process-parameter/cost optimisation source; no direct heat-treatment or fatigue recommendation data.
+NEW08_Laser_powder_bed_fused_Inconel_718_in_stress_relieved_and_solution_heat_treated_conditions.pdf,AM primary,yes,LPBF IN718 stress-relieved and solution-treated conditions; core heat-treatment and mechanical-property evidence.
+NEW09_Outstanding_strength_ductility_synergy_in_Inconel_718_superalloy_via_laser_powder_bed_fusi.pdf,AM primary,partial,LPBF IN718 thermomechanical treatment source; strong mechanical-property evidence but route differs from furnace-only heat treatment.
+NEW10_Heat_treatment_for_selective_laser_melting_of_Inconel_718_alloy_with_simultaneously_enhanc.pdf,AM primary,yes,SLM IN718 heat treatment with tensile and fatigue improvement evidence; priority expert-system source.
+NEW11_The_microstructure_and_fatigue_performance_of_Inconel_718_produced_by_laser_based_powder.pdf,AM primary,yes,Laser PBF IN718 post-heat-treatment microstructure and fatigue-performance evidence; priority source.
+NEW12_metals_11_00144_v3.pdf,AM primary,yes,LPBF IN718 post-process heat-treatment optimisation with tensile/hardness/texture evidence.
+NEW13_caiazzo2020.pdf,AM process background,background_or_partial,LPBF IN718 volumetric-energy-density and hardness/process evidence; use as process-window background.
+NEW14_materials_13_02574_v2.pdf,AM primary,yes,LPBF IN718 homogenisation and solution-treatment-time evidence focused on microstructure and hardness.
+NEW15_coatings_13_00189.pdf,AM primary,yes,LPBF IN718 process-parameter plus heat-treatment source with mechanical/hardness evidence.
+NEW16_ssrn_4798171.pdf,AM preprint,partial,Laser PBF IN718 new heat-treatment/preprint evidence; use with lower confidence until peer-reviewed version is confirmed.
+NEW17_MARINO_THESIS_2022.pdf,AM thesis,partial,"LPBF IN718 thesis covering print parameters, heat treatment, and fatigue; useful grey literature, keep confidence lower."

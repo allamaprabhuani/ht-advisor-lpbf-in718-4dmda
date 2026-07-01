@@ -3,6 +3,5 @@ HT_0001,COND_0001,HIP_ST_DA,"LPBF Vertical HP+ST+DA 3h at 1163 °C and 100 Mpa -
 HT_0002,COND_0002,ST_DA,LBPF Vertical ST+DA,true,curated_reviewed,EVID_EXCEL_0002
 HT_0003,COND_0003,ST_DA,LBPF Vertical ST+DA,true,curated_reviewed,EVID_EXCEL_0003
 HT_0005,COND_0005,ST_DA,LBPF Vertical ST - DA 1 h at 980C + air cool--> 8 h at 720C + furnace cool to 620C --> 8 h at 620C+Air-cooled to room temperature,true,curated_reviewed,EVID_EXCEL_0005
-HT_0006,COND_0006,HIP_ST_DA,"LBPF Vertical HP+DA 2 h of hot isostatic pressure at 1200C and 150 MPa + slow cool in HIP device --> 8 h at 720C + furnace cool to
-620C --> 8 h at 620C+Air-cooled to room temperature",true,curated_reviewed,EVID_EXCEL_0006
+HT_0006,COND_0006,HIP_ST_DA,LBPF Vertical HP+DA 2 h of hot isostatic pressure at 1200C and 150 MPa + slow cool in HIP device --> 8 h at 720C + furnace cool to 620C --> 8 h at 620C+Air-cooled to room temperature,true,curated_reviewed,EVID_EXCEL_0006
 HT_0007,COND_0007,ST_DA,LBPF Vertical ST +DA 2 h at 1200C --> 8 h at 720C + furnace cool to 620C --> 8 h at 620C+Air-cooled to room temperature,true,curated_reviewed,EVID_EXCEL_0007

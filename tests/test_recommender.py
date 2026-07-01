@@ -21,6 +21,7 @@ def test_default_request_assumes_no_local_hip_access():
     assert req.allow_hip is False
     rows = rank_heat_treatments(req)
     assert rows[0]["ht_class"] == "ST_DA"
+    assert rows[0]["evidence_count_seed"] >= 10
     assert len(rows) >= 3
     assert all("HIP" not in r["ht_class"] for r in rows)
 
