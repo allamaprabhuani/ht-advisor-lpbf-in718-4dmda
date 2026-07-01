@@ -16,11 +16,7 @@ from pathlib import Path
 import pdfplumber
 
 
-BASE = Path(
-    "/Users/allamaprabhuani/Library/CloudStorage/"
-    "OneDrive-CityStGeorge's,UniversityofLondon (02-06-2026 13:31)/"
-    "4DMDA Conference - Nic"
-)
+BASE = Path(__file__).resolve().parents[1]
 CORPUS = BASE / "ml_project" / "corpus_pdfs"
 OUT = BASE / "ml_project" / "extracted_data"
 TEXT_OUT = OUT / "text"

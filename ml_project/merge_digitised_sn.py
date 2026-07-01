@@ -97,6 +97,10 @@ def main():
                         "alloy": "Inconel 718",
                         "test_type": "fatigue",
                         "stress_metric_digitised": target["y_axis_label"],
+                        "stress_metric_type": target.get("stress_metric_type", "unknown"),
+                        "axis_scale_x": target.get("axis_scale_x", ""),
+                        "axis_scale_y": target.get("axis_scale_y", ""),
+                        "runout_encoding": target.get("runout_encoding", ""),
                         "stress_ratio_R": target.get("stress_ratio_R", ""),
                         "test_temperature_C": target.get("test_temperature_C", ""),
                         "build_orientation": target.get("build_orientation", ""),
@@ -105,15 +109,18 @@ def main():
                         "cycles_to_failure": cycles,
                         "log10_cycles_to_failure": log10_or_blank(cycles),
                         "data_origin": str(csv_path),
-                        "data_status": "digitised_needs_metadata",
+                        "data_status": "digitised_needs_stress_metric_review"
+                        if target.get("stress_metric_type", "unknown") == "unknown"
+                        else "digitised_needs_metadata",
                         "review_status": "needs_review",
                         "notes": "Merged from digitize_sn.py output; condition metadata requires manual assignment and source-level review.",
                     }
                 )
+                stress_metric_type = target.get("stress_metric_type", "").lower()
                 y_label = target["y_axis_label"].lower()
-                if "amplitude" in y_label:
+                if stress_metric_type == "stress_amplitude" or "amplitude" in y_label:
                     row["stress_amplitude_MPa"] = stress
-                elif "maximum" in y_label or "max" in y_label:
+                elif stress_metric_type == "maximum_stress" or "maximum" in y_label or "max" in y_label:
                     row["max_stress_MPa"] = stress
                 rows.append(row)
 

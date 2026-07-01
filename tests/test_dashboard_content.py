@@ -38,6 +38,7 @@ def test_dashboard_exposes_manual_inputs_and_auditable_model_views():
     required = [
         "Manual experimental inputs",
         "Maximum practical cycle time",
+        "Text recommendation",
         "Generate text recommendation",
         "Show calibrated evidence table",
         "Show model specification",
@@ -57,6 +58,7 @@ def test_dashboard_input_controls_include_detailed_help_text():
         "Decision posture controls how strongly the framework penalises limited evidence and local constraints.",
         "Available furnace range is used to penalise routes that exceed local equipment capability.",
         "Build orientation is retained as a fatigue-risk modifier.",
+        "Coordinate convention: X and Y lie in the build plate; Z is the build direction.",
         "Maximum furnace temperature available for practical validation.",
         "Maximum total hold time that can be scheduled for a single heat-treatment route.",
         "Target fatigue life is used only as a validation objective.",
@@ -166,6 +168,32 @@ def test_dashboard_adds_richer_academic_visualisations():
         "go.Waterfall",
         "hovertemplate",
         "height=520",
+    ]
+    for phrase in required:
+        assert phrase in APP_TEXT
+
+
+def test_dashboard_explains_build_orientation_coordinate_system():
+    required = [
+        "Build-orientation coordinate convention",
+        "build plate",
+        "Z build direction",
+        "go.Scatter3d",
+        "x-axis",
+        "y-axis",
+        "z-axis",
+    ]
+    for phrase in required:
+        assert phrase in APP_TEXT
+
+
+def test_dashboard_exposes_sn_preparation_audit():
+    required = [
+        "S-N PDF review queue",
+        "Blocking gates before fatigue model use",
+        "sn_pdf_review_queue.csv",
+        "sn_digitisation_audit_summary.json",
+        "High-priority review sources",
     ]
     for phrase in required:
         assert phrase in APP_TEXT

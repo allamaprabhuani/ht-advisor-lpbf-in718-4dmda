@@ -47,6 +47,7 @@ OUTPUTS = ROOT / "ml_project" / "model_outputs"
 EXTRACTED = ROOT / "ml_project" / "extracted_data"
 LITERATURE = ROOT / "ml_project" / "literature_search"
 DATA = ROOT / "ml_project" / "data"
+REPORTS = ROOT / "ml_project" / "reports"
 
 st.set_page_config(page_title="HT-Advisor", layout="wide")
 st.markdown(
@@ -165,6 +166,8 @@ route_predictions_path = OUTPUTS / "route_property_predictions.csv"
 training_table_path = OUTPUTS / "physics_guided_training_table.csv"
 sn_targets_path = DATA / "sn_digitisation_targets.csv"
 sn_points_path = DATA / "sn_curve_points.csv"
+sn_review_queue_path = REPORTS / "sn_pdf_review_queue.csv"
+sn_audit_summary_path = REPORTS / "sn_digitisation_audit_summary.json"
 
 recs = load_csv(recs_path, file_fingerprint(recs_path))
 sources = load_csv(sources_path, file_fingerprint(sources_path))
@@ -178,6 +181,8 @@ route_predictions = load_csv(route_predictions_path, file_fingerprint(route_pred
 training_table = load_csv(training_table_path, file_fingerprint(training_table_path))
 sn_targets = load_csv(sn_targets_path, file_fingerprint(sn_targets_path))
 sn_points = load_csv(sn_points_path, file_fingerprint(sn_points_path))
+sn_review_queue = load_csv(sn_review_queue_path, file_fingerprint(sn_review_queue_path))
+sn_audit_summary = load_json(sn_audit_summary_path, file_fingerprint(sn_audit_summary_path))
 supporting_literature = build_supporting_literature_table()
 
 ACADEMIC_COLORS = ["#2f5d62", "#5b7f95", "#8a6f3d", "#6b7280", "#a44a3f", "#7d8f69"]
@@ -438,6 +443,7 @@ INPUT_HELP = {
     ),
     "build_orientation": (
         "Build orientation is retained as a fatigue-risk modifier. "
+        "Coordinate convention: X and Y lie in the build plate; Z is the build direction. "
         "Vertical, horizontal, and mixed orientations can show different defect alignment, surface exposure, and fatigue scatter. "
         "The current model records the orientation for risk interpretation rather than fitting orientation-specific fatigue life."
     ),
@@ -693,6 +699,11 @@ with tab1:
         m3.metric("Evidence confidence", str(top_row["confidence"]), help="Categorical confidence derived from the number of supporting literature records.")
         occupancy = top_row.get("estimated_furnace_occupancy_h", "not assessed")
         m4.metric("Estimated furnace occupancy", f"{float(occupancy):.1f} h" if pd.notna(occupancy) and occupancy != "not assessed" else "not assessed", help="Total expected hours of furnace time, excluding ramp rates.")
+        st.markdown("#### Text recommendation")
+        st.info(generate_text_recommendation(top_row, manual_context))
+        st.caption(
+            "This text is a traceable recommendation summary. It should be read with the ranked route table, evidence base, and validation plan."
+        )
 
     with st.expander("Current input context", expanded=False):
         st.write(
@@ -972,6 +983,24 @@ with tab2:
         s1.metric("Registered S-N targets", len(sn_targets), help="Candidate or confirmed fatigue figures registered for point-level digitisation.")
         s2.metric("Saved S-N figure images", saved_figures, help="Registered targets that already have a local snipped figure image.")
         s3.metric("Reviewed S-N points", reviewed_points, help="Digitised fatigue points that have passed manual metadata review.")
+        if sn_audit_summary:
+            a1, a2 = st.columns(2)
+            a1.metric(
+                "High-priority review sources",
+                sn_audit_summary.get("high_priority_sources", "not available"),
+                help="Sources requiring figure verification, missing snapshots, or unregistered S-N page review before digitisation.",
+            )
+            a2.metric(
+                "Candidate fatigue pages",
+                sn_audit_summary.get("fatigue_candidate_pages", "not available"),
+                help="Pages flagged by broad fatigue-term screening. These are review candidates, not confirmed S-N figures.",
+            )
+            with st.expander("Blocking gates before fatigue model use", expanded=False):
+                st.caption(
+                    "Loaded from sn_digitisation_audit_summary.json. These gates must be cleared before reviewed S-N points are used for fatigue fitting."
+                )
+                for gate in sn_audit_summary.get("blocking_gates", []):
+                    st.write(f"- {gate}")
         with st.expander("S-N digitisation register", expanded=False):
             st.caption(
                 "This register tracks fatigue figures before they are used as model data. "
@@ -993,6 +1022,12 @@ with tab2:
                 st.info("No reviewed S-N point rows are currently available. Registered targets must be digitised and reviewed before fatigue-life fitting.")
             else:
                 st.dataframe(sn_points, width="stretch")
+        if not sn_review_queue.empty:
+            with st.expander("S-N PDF review queue", expanded=False):
+                st.caption(
+                    "Loaded from sn_pdf_review_queue.csv. Rows identify which source PDFs require figure verification, missing snapshot capture, or unregistered S-N page review."
+                )
+                st.dataframe(sn_review_queue, width="stretch")
     with st.expander("Show calibrated evidence table", expanded=False):
         raw_training = build_raw_training_data_table(sources, source_files, online_manifest)
         st.caption("The calibration evidence table includes source identifier, title, DOI, reference URL, AM-scope assessment, local file hash, and download status.")
@@ -1276,6 +1311,62 @@ with tab6:
         "Registered figures are traceable to source identifier, PDF filename, page, figure image, and review status. "
         "Digitised points are not used for model fitting until each point has been reviewed with stress ratio, test temperature, surface condition, build orientation, and heat-treatment metadata."
     )
+    st.markdown("#### Build-orientation coordinate convention")
+    st.write(
+        "Coordinate convention: X and Y lie in the build plate; Z is the build direction. "
+        "A vertical fatigue specimen is aligned mainly with the z-axis, while a horizontal specimen is aligned mainly with an x-axis or y-axis direction. "
+        "Mixed orientations should be recorded when the gauge section or critical feature is not aligned with a single build-axis direction."
+    )
+    orientation_fig = go.Figure()
+    orientation_fig.add_trace(
+        go.Scatter3d(
+            x=[0, 1.1, None, 0, 0, None, 0, 0],
+            y=[0, 0, None, 0, 1.1, None, 0, 0],
+            z=[0, 0, None, 0, 0, None, 0, 1.2],
+            mode="lines+markers+text",
+            text=["origin", "x-axis", "", "origin", "y-axis", "", "origin", "z-axis"],
+            textposition="top center",
+            line=dict(width=6, color="#22535a"),
+            marker=dict(size=4, color="#22535a"),
+            name="Coordinate axes",
+            hovertemplate="%{text}<extra></extra>",
+        )
+    )
+    orientation_fig.add_trace(
+        go.Scatter3d(
+            x=[0, 1, 1, 0, 0],
+            y=[0, 0, 1, 1, 0],
+            z=[0, 0, 0, 0, 0],
+            mode="lines",
+            line=dict(width=4, color="#8a6f3d"),
+            name="build plate",
+            hovertemplate="Build plate: X-Y plane<extra></extra>",
+        )
+    )
+    orientation_fig.add_trace(
+        go.Scatter3d(
+            x=[0.55, 0.55],
+            y=[0.55, 0.55],
+            z=[0, 1.0],
+            mode="lines+text",
+            text=["", "Z build direction"],
+            textposition="top center",
+            line=dict(width=8, color="#a44a3f"),
+            name="Z build direction",
+            hovertemplate="Vertical build direction<extra></extra>",
+        )
+    )
+    orientation_fig.update_layout(
+        scene=dict(
+            xaxis_title="x-axis",
+            yaxis_title="y-axis",
+            zaxis_title="z-axis",
+            aspectmode="cube",
+            camera=dict(eye=dict(x=1.4, y=1.5, z=1.0)),
+        ),
+        showlegend=True,
+    )
+    st.plotly_chart(academic_layout(orientation_fig, "Build plate and build-direction convention", height=420), width="stretch")
     st.markdown("#### Extrapolation warning and Empirical error bounds")
     st.write(
         "The framework flags route estimates outside the reviewed calibration envelope and reports Empirical error bounds derived from calibration residuals. "

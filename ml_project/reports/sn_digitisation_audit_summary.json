@@ -1,0 +1,19 @@
+{
+  "generated_at_utc": "2026-07-01T13:22:43.426616+00:00",
+  "pdf_count": 36,
+  "source_count": 36,
+  "registered_sn_targets": 21,
+  "saved_sn_figure_images": 12,
+  "reviewed_sn_points": 0,
+  "fatigue_candidate_pages": 466,
+  "sn_candidate_pages": 179,
+  "high_priority_sources": 26,
+  "blocking_gates": [
+    "no_reviewed_sn_points",
+    "stress_metric_unknown",
+    "figure_identity_unverified",
+    "source_page_missing",
+    "figure_image_missing",
+    "axis_scale_unknown"
+  ]
+}
