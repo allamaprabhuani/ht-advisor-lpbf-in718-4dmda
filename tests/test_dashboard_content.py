@@ -124,3 +124,17 @@ def test_dashboard_shows_example_combinations_and_nonempty_fallback_guidance():
     ]
     for phrase in required:
         assert phrase in APP_TEXT
+
+
+def test_dashboard_renders_equations_and_abbreviation_guidance_professionally():
+    required = [
+        "Notation and abbreviations",
+        "All route abbreviations and units used in the dashboard are defined here.",
+        "build_notation_table",
+        "build_equation_table",
+        "st.latex",
+        "Variable definitions",
+        "Recommendation-index expression",
+    ]
+    for phrase in required:
+        assert phrase in APP_TEXT

@@ -5,7 +5,9 @@ import pandas as pd
 from ml_project.ht_advisor.physics_guided_model import (
     FEATURE_COLUMNS,
     apply_ml_property_ranking,
+    build_equation_table,
     build_help_sections,
+    build_notation_table,
     build_training_table,
     fit_physics_guided_models,
     predict_candidate_routes,
@@ -165,3 +167,36 @@ def test_help_sections_disclose_how_to_use_and_model_limitations():
     assert "not a physics-informed neural network" in full_text
     assert "local experimental validation" in full_text
     assert "Empirical error bounds" in full_text
+
+
+def test_notation_table_defines_dashboard_abbreviations():
+    table = build_notation_table()
+
+    assert list(table.columns) == ["term", "meaning", "context"]
+    required_terms = {
+        "LPBF",
+        "HIP",
+        "ST",
+        "DA",
+        "HA",
+        "UTS",
+        "YS",
+        "S-N",
+        "SEM",
+        "EDS",
+        "MPa",
+        "wt.%",
+    }
+    assert required_terms.issubset(set(table["term"]))
+    assert table["meaning"].str.len().gt(0).all()
+
+
+def test_equation_table_uses_formal_latex_and_variable_definitions():
+    table = build_equation_table()
+
+    assert list(table.columns) == ["name", "latex", "definition"]
+    assert "Larson-Miller thermal dose" in table["name"].tolist()
+    assert table["latex"].str.contains(r"\log_{10}", regex=False).any()
+    assert table["latex"].str.contains(r"\sum", regex=False).any()
+    assert table["latex"].str.contains(r"\sigma_a", regex=False).any()
+    assert table["definition"].str.contains("defined below", regex=False).all()

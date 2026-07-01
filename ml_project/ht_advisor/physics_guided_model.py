@@ -325,6 +325,110 @@ def train_and_write_artifacts(seed_rows: pd.DataFrame, output_dir: str | Path) -
     return report, predictions
 
 
+def build_notation_table() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "term": "LPBF",
+                "meaning": "laser powder bed fusion",
+                "context": "Additive-manufacturing process used for the Inconel 718 specimens.",
+            },
+            {
+                "term": "SLM",
+                "meaning": "selective laser melting",
+                "context": "Earlier or alternative literature term often used for LPBF.",
+            },
+            {
+                "term": "IN718",
+                "meaning": "Inconel 718",
+                "context": "Nickel-base superalloy considered in the recommendation framework.",
+            },
+            {
+                "term": "HIP",
+                "meaning": "hot isostatic pressing",
+                "context": "Porosity-reduction route retained as a benchmark, not as the local default.",
+            },
+            {
+                "term": "ST",
+                "meaning": "solution treatment",
+                "context": "High-temperature heat-treatment step used before ageing in several route labels.",
+            },
+            {
+                "term": "DA",
+                "meaning": "double ageing",
+                "context": "Ageing sequence used to promote gamma-prime and gamma-double-prime strengthening.",
+            },
+            {
+                "term": "HA",
+                "meaning": "homogenisation anneal",
+                "context": "Higher-temperature step used to reduce segregation before solution treatment and ageing.",
+            },
+            {
+                "term": "UTS",
+                "meaning": "ultimate tensile strength",
+                "context": "Static tensile indicator reported in MPa.",
+            },
+            {
+                "term": "YS",
+                "meaning": "yield strength",
+                "context": "Static tensile indicator reported in MPa.",
+            },
+            {
+                "term": "S-N",
+                "meaning": "stress-life fatigue relationship",
+                "context": "Fatigue representation relating cyclic stress to cycles to failure.",
+            },
+            {
+                "term": "SEM",
+                "meaning": "scanning electron microscopy",
+                "context": "Microstructural and fracture-surface characterisation method.",
+            },
+            {
+                "term": "EDS",
+                "meaning": "energy-dispersive X-ray spectroscopy",
+                "context": "Composition-sensitive method used with SEM to assess segregation.",
+            },
+            {
+                "term": "MPa",
+                "meaning": "megapascal",
+                "context": "Stress unit used for tensile and fatigue quantities.",
+            },
+            {
+                "term": "wt.%",
+                "meaning": "weight percent",
+                "context": "Composition unit used for nominal chemistry inputs.",
+            },
+        ]
+    )
+
+
+def build_equation_table() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "name": "Larson-Miller thermal dose",
+                "latex": r"P = T_K \left(C + \log_{10}(t_h)\right)",
+                "definition": "Variables are defined below; this term summarises temperature-time exposure for heat-treatment features.",
+            },
+            {
+                "name": "Arrhenius thermal activation index",
+                "latex": r"A = \sum_i t_i \exp\left[-\frac{Q}{R}\left(\frac{1}{T_i} - \frac{1}{T_{ref}}\right)\right]",
+                "definition": "Variables are defined below; this index represents thermally activated exposure relative to a reference temperature.",
+            },
+            {
+                "name": "Basquin fatigue relation",
+                "latex": r"\sigma_a = \sigma_f' \left(2N_f\right)^b",
+                "definition": "Variables are defined below; this is used only for fatigue interpretation until local S-N data are fitted.",
+            },
+            {
+                "name": "Recommendation-index expression",
+                "latex": r"s_{rec} = 0.7s_{evidence} + 0.3s_{property}",
+                "definition": "Variables are defined below; this combines the evidence-weighted route score with the calibrated static-property index.",
+            },
+        ]
+    )
+
+
 def build_help_sections() -> list[dict[str, str]]:
     return [
         {
@@ -345,7 +449,15 @@ def build_help_sections() -> list[dict[str, str]]:
             "title": "Physics used in the recommendation",
             "body": (
                 "The model uses heat-treatment class flags, solution and ageing temperatures, total time, Larson-Miller thermal dose, and Arrhenius thermal activation. "
+                "Formal equations and variable definitions are shown in the notation section of the dashboard. "
                 "Basquin fatigue behaviour and defect-sensitive fatigue reasoning are used for interpretation, but not yet fitted as an S-N predictor."
+            ),
+        },
+        {
+            "title": "Notation and abbreviations",
+            "body": (
+                "All route abbreviations, property symbols, and units used in the dashboard are defined in the notation table. "
+                "Equation-like statements are rendered as mathematical notation and accompanied by variable definitions."
             ),
         },
         {
