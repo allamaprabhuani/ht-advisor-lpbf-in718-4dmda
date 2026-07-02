@@ -98,6 +98,75 @@ except ImportError:
         for item in experiments or []:
             lines.append(f"- {item['priority']}: {item['experiment']} - {item['reason']}")
         return "\n".join(lines)
+
+
+def build_printable_report_safely(
+    input_conditions: dict[str, object],
+    top_row: dict | pd.Series,
+    context: ManualInputContext,
+    fatigue_schedule: pd.DataFrame,
+    sn_status: dict[str, object],
+    experiments: list[dict[str, str]] | None = None,
+) -> str:
+    try:
+        return build_printable_recommendation_report(
+            input_conditions=input_conditions,
+            top_row=top_row,
+            context=context,
+            fatigue_schedule=fatigue_schedule,
+            sn_status=sn_status,
+            experiments=experiments,
+        )
+    except (AttributeError, KeyError, TypeError, ValueError):
+        row = dict(top_row)
+        lines = [
+            "# Printable recommendation report",
+            "",
+            "## Process & Material Specifications",
+            "",
+            "### Full input conditions",
+        ]
+        for key, value in input_conditions.items():
+            lines.append(f"- {key}: {value}")
+        lines.extend(
+            [
+                "",
+                "## Recommended heat-treatment route",
+                "",
+                f"- Route: {row.get('ht_class', 'not available')}",
+                f"- Proposed validation recipe: {row.get('selected_recipe_summary', row.get('temperature_time_window', 'not specified'))}",
+                f"- Recommendation index: {float(row.get('ml_assisted_score', row.get('adjusted_score', 0.0))):.2f}",
+                "",
+                "## Expected static-property estimates",
+            ]
+        )
+        for label, column, unit in [
+            ("UTS", "predicted_UTS_MPa", "MPa"),
+            ("YS", "predicted_YS_MPa", "MPa"),
+            ("Elongation", "predicted_elongation_pct", "%"),
+        ]:
+            if column in row and pd.notna(row.get(column)):
+                lines.append(f"- {label}: {float(row[column]):.1f} {unit}")
+        lines.extend(["", "## Fatigue validation schedule"])
+        for _, item in fatigue_schedule.iterrows():
+            lines.append(
+                f"- sigma_a = {int(item['stress_amplitude_MPa'])} MPa; sigma_max = {int(item['sigma_max_MPa'])} MPa; "
+                f"sigma_min = {int(item['sigma_min_MPa'])} MPa; sigma_mean = {int(item['sigma_mean_MPa'])} MPa; "
+                f"target runout = {item['target_runout_cycles']} cycles"
+            )
+        lines.extend(
+            [
+                "",
+                "## S-N training status",
+                f"- Status: {sn_status.get('status_message')}",
+                f"- Boundary: {sn_status.get('report_note')}",
+                "",
+                "## Must-have experimental validation",
+            ]
+        )
+        for item in experiments or []:
+            lines.append(f"- {item['priority']}: {item['experiment']} - {item['reason']}")
+        return "\n".join(lines)
 try:
     from ml_project.ht_advisor.expert_system import build_fatigue_validation_schedule
 except ImportError:
@@ -910,7 +979,7 @@ with tab1:
             "The report below is formatted for research-team discussion and local printing. "
             "S-N curves have not yet been trained; Fatigue life is not predicted in the current release."
         )
-        report_markdown = build_printable_recommendation_report(
+        report_markdown = build_printable_report_safely(
             input_conditions=input_conditions,
             top_row=top_row,
             context=manual_context,
