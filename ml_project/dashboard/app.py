@@ -26,11 +26,78 @@ from ml_project.ht_advisor.expert_system import (
     apply_manual_inputs,
     build_must_have_experiments,
     build_model_specification,
-    build_printable_recommendation_report,
     build_raw_training_data_table,
-    build_sn_training_status,
     generate_text_recommendation,
 )
+try:
+    from ml_project.ht_advisor.expert_system import build_printable_recommendation_report, build_sn_training_status
+except ImportError:
+    def build_sn_training_status(sn_points: pd.DataFrame, sn_targets: pd.DataFrame | None = None) -> dict[str, object]:
+        reviewed_point_rows = 0
+        if sn_points is not None and not sn_points.empty:
+            if "review_status" in sn_points.columns:
+                reviewed_point_rows = int(sn_points["review_status"].astype(str).str.contains("reviewed", case=False, na=False).sum())
+            else:
+                reviewed_point_rows = int(len(sn_points))
+        return {
+            "sn_model_trained": False,
+            "reviewed_point_rows": reviewed_point_rows,
+            "registered_targets": int(len(sn_targets)) if sn_targets is not None else 0,
+            "status_message": "S-N curves have not yet been trained because the reviewed point table does not contain enough approved fatigue data.",
+            "report_note": "Fatigue life is not predicted in the current release; stress ratio and target cycles are used only to plan validation tests.",
+        }
+
+    def build_printable_recommendation_report(
+        input_conditions: dict[str, object],
+        top_row: dict | pd.Series,
+        context: ManualInputContext,
+        fatigue_schedule: pd.DataFrame,
+        sn_status: dict[str, object],
+        experiments: list[dict[str, str]] | None = None,
+    ) -> str:
+        row = dict(top_row)
+        lines = ["# Printable recommendation report", "", "## Process & Material Specifications", "", "### Full input conditions"]
+        for key, value in input_conditions.items():
+            lines.append(f"- {key}: {value}")
+        lines.extend(
+            [
+                "",
+                "## Recommended heat-treatment route",
+                "",
+                f"- Route: {row.get('ht_class', 'not available')}",
+                f"- Proposed validation recipe: {row.get('selected_recipe_summary', row.get('temperature_time_window', 'not specified'))}",
+                f"- Recommendation index: {float(row.get('ml_assisted_score', row.get('adjusted_score', 0.0))):.2f}",
+                f"- Fatigue validation context: R = {context.stress_ratio_R:g}; Nf = {context.target_life_cycles:,} cycles" if context.target_life_cycles else f"- Fatigue validation context: R = {context.stress_ratio_R:g}; Nf not specified",
+                "",
+                "## Expected static-property estimates",
+            ]
+        )
+        for label, column, unit in [
+            ("UTS", "predicted_UTS_MPa", "MPa"),
+            ("YS", "predicted_YS_MPa", "MPa"),
+            ("Elongation", "predicted_elongation_pct", "%"),
+        ]:
+            if column in row and pd.notna(row.get(column)):
+                lines.append(f"- {label}: {float(row[column]):.1f} {unit}")
+        lines.extend(["", "## Fatigue validation schedule"])
+        for _, item in fatigue_schedule.iterrows():
+            lines.append(
+                f"- sigma_a = {int(item['stress_amplitude_MPa'])} MPa; sigma_max = {int(item['sigma_max_MPa'])} MPa; "
+                f"sigma_min = {int(item['sigma_min_MPa'])} MPa; target runout = {item['target_runout_cycles']} cycles"
+            )
+        lines.extend(
+            [
+                "",
+                "## S-N training status",
+                f"- Status: {sn_status.get('status_message')}",
+                f"- Boundary: {sn_status.get('report_note')}",
+                "",
+                "## Must-have experimental validation",
+            ]
+        )
+        for item in experiments or []:
+            lines.append(f"- {item['priority']}: {item['experiment']} - {item['reason']}")
+        return "\n".join(lines)
 try:
     from ml_project.ht_advisor.expert_system import build_fatigue_validation_schedule
 except ImportError:
