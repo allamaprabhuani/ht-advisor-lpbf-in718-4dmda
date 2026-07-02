@@ -323,6 +323,34 @@ def _fatigue_validation_context(context: ManualInputContext) -> str:
     return f"{stress_ratio}; {life}"
 
 
+def build_fatigue_validation_schedule(
+    stress_ratio_R: float = 0.1,
+    target_life_cycles: int | None = 1000000,
+    stress_amplitudes_MPa: list[int] | None = None,
+) -> pd.DataFrame:
+    amplitudes = stress_amplitudes_MPa or [300, 350, 400, 450]
+    if stress_ratio_R >= 1.0:
+        raise ValueError("stress_ratio_R must be less than 1.0")
+
+    rows: list[dict[str, object]] = []
+    for amplitude in amplitudes:
+        sigma_max = 2.0 * float(amplitude) / (1.0 - float(stress_ratio_R))
+        sigma_min = float(stress_ratio_R) * sigma_max
+        sigma_mean = 0.5 * (sigma_max + sigma_min)
+        rows.append(
+            {
+                "stress_amplitude_MPa": int(amplitude),
+                "stress_ratio_R": round(float(stress_ratio_R), 3),
+                "sigma_max_MPa": int(round(sigma_max)),
+                "sigma_min_MPa": int(round(sigma_min)),
+                "sigma_mean_MPa": int(round(sigma_mean)),
+                "target_runout_cycles": int(target_life_cycles) if target_life_cycles else "not specified",
+                "interpretation": "validation stress level, not predicted life",
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def generate_text_recommendation(top_row: dict | pd.Series, context: ManualInputContext) -> str:
     row = dict(top_row)
     ht_class = str(row.get("ht_class", "the selected route"))

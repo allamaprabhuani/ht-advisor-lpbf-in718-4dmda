@@ -4,6 +4,7 @@ from ml_project.ht_advisor.expert_system import (
     ManualInputContext,
     apply_manual_inputs,
     build_example_input_combinations,
+    build_fatigue_validation_schedule,
     build_must_have_experiments,
     build_model_specification,
     build_raw_training_data_table,
@@ -184,6 +185,27 @@ def test_must_have_experiments_include_baselines_microstructure_and_fatigue_caut
     assert "SEM/EDS" in joined
     assert "fatigue" in joined.lower()
     assert any(item["priority"] == "required" for item in experiments)
+
+
+def test_fatigue_validation_schedule_computes_r_ratio_stress_levels_without_predicting_life():
+    schedule = build_fatigue_validation_schedule(stress_ratio_R=0.1, target_life_cycles=1000000)
+
+    assert list(schedule.columns) == [
+        "stress_amplitude_MPa",
+        "stress_ratio_R",
+        "sigma_max_MPa",
+        "sigma_min_MPa",
+        "sigma_mean_MPa",
+        "target_runout_cycles",
+        "interpretation",
+    ]
+    assert schedule["stress_amplitude_MPa"].tolist() == [300, 350, 400, 450]
+    first = schedule.iloc[0]
+    assert first["sigma_max_MPa"] == 667
+    assert first["sigma_min_MPa"] == 67
+    assert first["sigma_mean_MPa"] == 367
+    assert first["target_runout_cycles"] == 1000000
+    assert schedule["interpretation"].str.contains("validation stress level, not predicted life").all()
 
 
 def test_select_recommendation_subset_falls_back_and_reports_out_of_grid_fields():

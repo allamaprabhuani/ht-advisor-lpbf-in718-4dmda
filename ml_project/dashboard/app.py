@@ -24,6 +24,7 @@ from ml_project.ht_advisor.dashboard_data import (
 from ml_project.ht_advisor.expert_system import (
     ManualInputContext,
     apply_manual_inputs,
+    build_fatigue_validation_schedule,
     build_must_have_experiments,
     build_model_specification,
     build_raw_training_data_table,
@@ -191,6 +192,15 @@ FEASIBILITY_COLORS = {
     "feasible under selected constraints": "#2f5d62",
     "conditional under selected constraints": "#8a6f3d",
     "limited by selected furnace range": "#a44a3f",
+}
+FATIGUE_SCHEDULE_COLUMN_CONFIG = {
+    "stress_amplitude_MPa": st.column_config.NumberColumn("Stress amplitude, sigma_a (MPa)"),
+    "stress_ratio_R": st.column_config.NumberColumn("Stress ratio, R"),
+    "sigma_max_MPa": st.column_config.NumberColumn("Maximum stress, sigma_max (MPa)"),
+    "sigma_min_MPa": st.column_config.NumberColumn("Minimum stress, sigma_min (MPa)"),
+    "sigma_mean_MPa": st.column_config.NumberColumn("Mean stress, sigma_mean (MPa)"),
+    "target_runout_cycles": st.column_config.TextColumn("Target runout cycles"),
+    "interpretation": st.column_config.TextColumn("Interpretation"),
 }
 
 
@@ -687,6 +697,10 @@ manual_context = build_manual_context_from_inputs(
     aluminium_wt_percent=aluminium,
     titanium_wt_percent=titanium,
 )
+fatigue_schedule = build_fatigue_validation_schedule(
+    stress_ratio_R=float(stress_ratio_R),
+    target_life_cycles=int(target_life_cycles) if target_life_cycles else None,
+)
 
 filtered = pd.DataFrame()
 adjusted = pd.DataFrame()
@@ -742,6 +756,12 @@ with tab1:
             help="Stress ratio and target cycles for validation planning. This is not a fatigue-life prediction.",
         )
         st.write(str(top_row.get("selected_recipe_summary", "No proposed recipe is available.")))
+        st.markdown("#### Fatigue validation stress schedule")
+        st.caption(
+            "These stress levels are proposed for experimental validation at the selected stress ratio. "
+            "The table does not report predicted fatigue life."
+        )
+        st.dataframe(fatigue_schedule, width="stretch", column_config=FATIGUE_SCHEDULE_COLUMN_CONFIG)
         st.markdown("#### Text recommendation")
         st.info(generate_text_recommendation(top_row, manual_context))
         st.caption(
@@ -1298,6 +1318,12 @@ with tab5:
     st.markdown("#### Must-have experimental validation")
     st.write("Minimum experiments required before presenting a framework-recommended route as a result.")
     st.dataframe(pd.DataFrame(build_must_have_experiments("selected framework route", allow_hip=False)), width="stretch")
+    st.markdown("#### Fatigue validation stress schedule")
+    st.write(
+        "Use these levels as a screening schedule for local fatigue validation. "
+        "Life at each stress level must be measured experimentally; the current model has not fitted S-N curves."
+    )
+    st.dataframe(fatigue_schedule, width="stretch", column_config=FATIGUE_SCHEDULE_COLUMN_CONFIG)
     st.markdown(
         """
         1. Include an as-built baseline.
