@@ -210,3 +210,20 @@ def test_dashboard_exposes_sn_preparation_audit():
     ]
     for phrase in required:
         assert phrase in APP_TEXT
+
+
+def test_dashboard_exposes_printable_recommendation_report():
+    required = [
+        "Printable recommendation report",
+        "Download printable report",
+        "Full input conditions",
+        "Expected static-property estimates",
+        "S-N training status",
+        "S-N curves have not yet been trained",
+        "Fatigue life is not predicted",
+        "Fatigue validation schedule plot",
+        "Validation stress schedule",
+        "Process & Material Specifications",
+    ]
+    for phrase in required:
+        assert phrase in APP_TEXT

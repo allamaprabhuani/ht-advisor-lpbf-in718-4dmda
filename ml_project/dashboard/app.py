@@ -26,7 +26,9 @@ from ml_project.ht_advisor.expert_system import (
     apply_manual_inputs,
     build_must_have_experiments,
     build_model_specification,
+    build_printable_recommendation_report,
     build_raw_training_data_table,
+    build_sn_training_status,
     generate_text_recommendation,
 )
 try:
@@ -148,6 +150,27 @@ st.markdown(
         border-left: 4px solid var(--academic-accent);
         background: #f4f6f7;
         color: var(--academic-ink);
+    }
+    .print-report {
+        background: #ffffff;
+        border: 1px solid var(--academic-border);
+        border-radius: 4px;
+        padding: 1rem 1.1rem;
+    }
+    .print-report h3 {
+        margin-top: 0.25rem;
+    }
+    @media print {
+        [data-testid="stSidebar"], [data-testid="stHeader"], button {
+            display: none !important;
+        }
+        .stApp {
+            background: #ffffff;
+        }
+        .print-report {
+            border: none;
+            padding: 0;
+        }
     }
     </style>
     """,
@@ -726,6 +749,28 @@ fatigue_schedule = build_fatigue_validation_schedule(
     stress_ratio_R=float(stress_ratio_R),
     target_life_cycles=int(target_life_cycles) if target_life_cycles else None,
 )
+sn_training_status = build_sn_training_status(sn_points=sn_points, sn_targets=sn_targets)
+input_conditions = {
+    "Primary design objective": target,
+    "Initial material state": initial_state,
+    "Representative section size": section_size,
+    "HIP benchmark inclusion": allow_hip,
+    "Decision posture": mode,
+    "Available furnace range": furnace_limit,
+    "Maximum furnace temperature": f"{int(furnace_limit_C)} C",
+    "Maximum practical cycle time": f"{float(maximum_cycle_hours):.1f} h",
+    "Surface condition": surface_condition,
+    "Build orientation": build_orientation,
+    "Cooling condition": cooling_condition,
+    "Target fatigue life": f"{int(target_life_cycles):,} cycles" if target_life_cycles else "not specified",
+    "Fatigue stress ratio": f"R = {float(stress_ratio_R):g}",
+}
+if niobium is not None:
+    input_conditions["Nb + Ta"] = f"{float(niobium):.2f} wt.%"
+if aluminium is not None:
+    input_conditions["Al"] = f"{float(aluminium):.2f} wt.%"
+if titanium is not None:
+    input_conditions["Ti"] = f"{float(titanium):.2f} wt.%"
 
 filtered = pd.DataFrame()
 adjusted = pd.DataFrame()
@@ -792,6 +837,151 @@ with tab1:
         st.caption(
             "This text is a traceable recommendation summary. It should be read with the ranked route table, evidence base, and validation plan."
         )
+        st.divider()
+        st.markdown("#### Printable recommendation report")
+        st.caption(
+            "The report below is formatted for research-team discussion and local printing. "
+            "S-N curves have not yet been trained; Fatigue life is not predicted in the current release."
+        )
+        report_markdown = build_printable_recommendation_report(
+            input_conditions=input_conditions,
+            top_row=top_row,
+            context=manual_context,
+            fatigue_schedule=fatigue_schedule,
+            sn_status=sn_training_status,
+            experiments=build_must_have_experiments(str(top_row["ht_class"]), allow_hip),
+        )
+        st.download_button(
+            "Download printable report",
+            report_markdown.encode("utf-8"),
+            file_name=f"ht_advisor_{str(top_row['ht_class']).lower()}_recommendation_report.md",
+            mime="text/markdown",
+            help="Download a Markdown report containing input conditions, recommendation details, static estimates, validation schedule, and S-N model status.",
+        )
+        with st.container(border=True):
+            st.markdown("<div class='print-report'>", unsafe_allow_html=True)
+            st.markdown("### Process & Material Specifications")
+            st.markdown("#### Full input conditions")
+            st.dataframe(pd.DataFrame([{"condition": key, "value": value} for key, value in input_conditions.items()]), width="stretch", hide_index=True)
+            st.markdown("#### Recommended heat-treatment route")
+            report_cols = st.columns(4)
+            report_cols[0].metric("Route", str(top_row["ht_class"]))
+            report_cols[1].metric(
+                "Peak temperature",
+                f"{int(top_row['recommended_peak_temperature_C'])} C" if pd.notna(top_row.get("recommended_peak_temperature_C")) else "not specified",
+            )
+            report_cols[2].metric(
+                "Total hold time",
+                f"{float(top_row['recommended_total_hold_h']):.1f} h" if pd.notna(top_row.get("recommended_total_hold_h")) else "not specified",
+            )
+            report_cols[3].metric("Recommendation index", f"{float(top_row['ml_assisted_score']):.2f}")
+            st.write(str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", "No proposed recipe is available."))))
+
+            plot_col_1, plot_col_2 = st.columns(2)
+            with plot_col_1:
+                st.markdown("#### Heat-treatment profile plot")
+                report_cycle_rows = build_thermal_cycle_rows(
+                    str(top_row["ht_class"]),
+                    str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", ""))),
+                )
+                if report_cycle_rows.empty:
+                    st.info("Thermal-cycle profile is unavailable for the selected route.")
+                else:
+                    report_cycle_fig = px.line(
+                        report_cycle_rows,
+                        x="elapsed_h",
+                        y="temperature_C",
+                        markers=True,
+                        color="stage",
+                        color_discrete_sequence=ACADEMIC_COLORS,
+                        labels={"elapsed_h": "Time, t (h)", "temperature_C": "Temperature, T (C)", "stage": "Thermal stage"},
+                    )
+                    report_cycle_fig.update_traces(
+                        hovertemplate="Stage: %{fullData.name}<br>Time: %{x:.2f} h<br>Temperature: %{y:.0f} C<extra></extra>"
+                    )
+                    st.plotly_chart(academic_layout(report_cycle_fig, "Nominal recommended thermal cycle", height=390), width="stretch")
+                    st.caption("Nominal profile shown; actual thermal history depends on furnace thermal mass, part geometry, and thermocouple placement.")
+            with plot_col_2:
+                st.markdown("#### Fatigue validation schedule plot")
+                schedule_long = fatigue_schedule.melt(
+                    id_vars=["stress_amplitude_MPa", "target_runout_cycles"],
+                    value_vars=["sigma_max_MPa", "sigma_mean_MPa", "sigma_min_MPa"],
+                    var_name="stress_quantity",
+                    value_name="stress_MPa",
+                )
+                schedule_fig = px.line(
+                    schedule_long,
+                    x="stress_amplitude_MPa",
+                    y="stress_MPa",
+                    color="stress_quantity",
+                    markers=True,
+                    color_discrete_sequence=ACADEMIC_COLORS,
+                    labels={
+                        "stress_amplitude_MPa": "Stress amplitude, sigma_a (MPa)",
+                        "stress_MPa": "Applied stress, sigma (MPa)",
+                        "stress_quantity": "Stress quantity",
+                    },
+                )
+                schedule_fig.update_traces(
+                    hovertemplate="Stress amplitude: %{x:.0f} MPa<br>Applied stress: %{y:.0f} MPa<br>Quantity: %{fullData.name}<extra></extra>"
+                )
+                st.plotly_chart(academic_layout(schedule_fig, "Validation stress schedule", height=390), width="stretch")
+                st.caption(
+                    f"Stress levels are test conditions for R = {float(stress_ratio_R):g}; they do not indicate survival to "
+                    f"{int(target_life_cycles):,} cycles."
+                )
+
+            st.markdown("#### Expected static-property estimates")
+            property_rows = []
+            property_specs = [
+                ("UTS", "predicted_UTS_MPa", "MPa"),
+                ("YS", "predicted_YS_MPa", "MPa"),
+                ("Elongation", "predicted_elongation_pct", "%"),
+            ]
+            for label, column, unit in property_specs:
+                if column in top_row and pd.notna(top_row.get(column)):
+                    property_rows.append(
+                        {
+                            "property": label,
+                            "estimate": float(top_row[column]),
+                            "lower": float(top_row.get(f"{column}_lower", top_row[column])),
+                            "upper": float(top_row.get(f"{column}_upper", top_row[column])),
+                            "unit": unit,
+                        }
+                    )
+            if property_rows:
+                property_df = pd.DataFrame(property_rows)
+                property_fig = go.Figure()
+                for _, property_row in property_df.iterrows():
+                    property_fig.add_trace(
+                        go.Bar(
+                            x=[property_row["property"]],
+                            y=[property_row["estimate"]],
+                            error_y=dict(
+                                type="data",
+                                array=[max(property_row["upper"] - property_row["estimate"], 0.0)],
+                                arrayminus=[max(property_row["estimate"] - property_row["lower"], 0.0)],
+                            ),
+                            name=f"{property_row['property']} ({property_row['unit']})",
+                            hovertemplate=(
+                                "Property: %{x}<br>"
+                                "Estimate: %{y:.1f}<br>"
+                                "<extra></extra>"
+                            ),
+                        )
+                    )
+                property_fig.update_yaxes(title="Estimated value")
+                st.plotly_chart(academic_layout(property_fig, "Expected static-property estimates with empirical bounds", height=390), width="stretch")
+                st.dataframe(property_df, width="stretch", hide_index=True)
+            else:
+                st.info("No calibrated static-property estimates are available for the selected route.")
+
+            st.markdown("#### S-N training status")
+            st.write(str(sn_training_status["status_message"]))
+            st.write(str(sn_training_status["report_note"]))
+            st.markdown("#### Markdown report preview")
+            st.markdown(report_markdown)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     with st.expander("Current input context", expanded=False):
         st.write(

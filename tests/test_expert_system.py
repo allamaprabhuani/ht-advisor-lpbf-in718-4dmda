@@ -7,7 +7,9 @@ from ml_project.ht_advisor.expert_system import (
     build_fatigue_validation_schedule,
     build_must_have_experiments,
     build_model_specification,
+    build_printable_recommendation_report,
     build_raw_training_data_table,
+    build_sn_training_status,
     generate_text_recommendation,
     select_recommendation_subset,
 )
@@ -206,6 +208,72 @@ def test_fatigue_validation_schedule_computes_r_ratio_stress_levels_without_pred
     assert first["sigma_mean_MPa"] == 367
     assert first["target_runout_cycles"] == 1000000
     assert schedule["interpretation"].str.contains("validation stress level, not predicted life").all()
+
+
+def test_sn_training_status_disables_fatigue_life_prediction_without_reviewed_points():
+    status = build_sn_training_status(
+        sn_points=pd.DataFrame(columns=["source_id", "review_status"]),
+        sn_targets=pd.DataFrame([{"source_id": "SRC001"}, {"source_id": "SRC002"}]),
+    )
+
+    assert status["sn_model_trained"] is False
+    assert status["reviewed_point_rows"] == 0
+    assert status["registered_targets"] == 2
+    assert "S-N curves have not yet been trained" in status["status_message"]
+    assert "Fatigue life is not predicted" in status["report_note"]
+
+
+def test_printable_report_includes_inputs_recipe_static_estimates_and_validation_boundary():
+    schedule = build_fatigue_validation_schedule(stress_ratio_R=0.1, target_life_cycles=1000000)
+    report = build_printable_recommendation_report(
+        input_conditions={
+            "Primary design objective": "fatigue",
+            "Build orientation": "vertical",
+            "Surface condition": "machined",
+            "Maximum furnace temperature": "980 C",
+        },
+        top_row={
+            "ht_class": "ST_DA",
+            "selected_recipe_summary": "980 C for 1 h; 720 C for 8 h; 620 C for 8 h",
+            "recommended_peak_temperature_C": 980,
+            "recommended_total_hold_h": 17.0,
+            "ml_assisted_score": 0.81,
+            "confidence": "medium",
+            "local_feasibility": "feasible under selected constraints",
+            "predicted_UTS_MPa": 1393.6,
+            "predicted_UTS_MPa_lower": 1371.4,
+            "predicted_UTS_MPa_upper": 1415.9,
+            "predicted_YS_MPa": 1089.4,
+            "predicted_YS_MPa_lower": 1061.8,
+            "predicted_YS_MPa_upper": 1116.9,
+            "predicted_elongation_pct": 12.7,
+            "predicted_elongation_pct_lower": 11.4,
+            "predicted_elongation_pct_upper": 14.0,
+        },
+        context=ManualInputContext(target_life_cycles=1000000, stress_ratio_R=0.1),
+        fatigue_schedule=schedule,
+        sn_status={
+            "sn_model_trained": False,
+            "reviewed_point_rows": 0,
+            "registered_targets": 21,
+            "status_message": "S-N curves have not yet been trained.",
+            "report_note": "Fatigue life is not predicted in the current release.",
+        },
+        experiments=build_must_have_experiments("ST_DA", allow_hip=False),
+    )
+
+    assert "Printable recommendation report" in report
+    assert "Full input conditions" in report
+    assert "ST_DA" in report
+    assert "980 C for 1 h; 720 C for 8 h; 620 C for 8 h" in report
+    assert "Expected static-property estimates" in report
+    assert "UTS: 1393.6 MPa" in report
+    assert "Fatigue validation schedule" in report
+    assert "sigma_max = 667 MPa" in report
+    assert "S-N training status" in report
+    assert "S-N curves have not yet been trained" in report
+    assert "Fatigue life is not predicted" in report
+    assert "Must-have experimental validation" in report
 
 
 def test_select_recommendation_subset_falls_back_and_reports_out_of_grid_fields():

@@ -351,6 +351,174 @@ def build_fatigue_validation_schedule(
     return pd.DataFrame(rows)
 
 
+def build_sn_training_status(
+    sn_points: pd.DataFrame,
+    sn_targets: pd.DataFrame | None = None,
+    minimum_reviewed_points: int = 12,
+) -> dict[str, object]:
+    if sn_points is None or sn_points.empty:
+        reviewed_point_rows = 0
+    elif "review_status" in sn_points.columns:
+        reviewed_point_rows = int(sn_points["review_status"].astype(str).str.contains("reviewed", case=False, na=False).sum())
+    else:
+        reviewed_point_rows = int(len(sn_points))
+
+    registered_targets = int(len(sn_targets)) if sn_targets is not None else 0
+    trained = reviewed_point_rows >= int(minimum_reviewed_points)
+    if trained:
+        status_message = (
+            f"S-N point review has reached the minimum fitting threshold ({reviewed_point_rows} reviewed rows). "
+            "A fitted fatigue-life model should still be reported only after calibration diagnostics are reviewed."
+        )
+        report_note = (
+            "Fatigue-life fitting is eligible for calibration review, but local validation remains required before performance claims."
+        )
+    else:
+        status_message = (
+            "S-N curves have not yet been trained because the reviewed point table does not contain enough approved fatigue data."
+        )
+        report_note = (
+            "Fatigue life is not predicted in the current release; stress ratio and target cycles are used only to plan validation tests."
+        )
+
+    return {
+        "sn_model_trained": trained,
+        "reviewed_point_rows": reviewed_point_rows,
+        "registered_targets": registered_targets,
+        "minimum_reviewed_points": int(minimum_reviewed_points),
+        "status_message": status_message,
+        "report_note": report_note,
+    }
+
+
+def _report_value(value: object) -> str:
+    if value is None:
+        return "not specified"
+    try:
+        if pd.isna(value):
+            return "not specified"
+    except (TypeError, ValueError):
+        pass
+    if isinstance(value, float):
+        return f"{value:.1f}" if value % 1 else f"{int(value)}"
+    return str(value)
+
+
+def _property_estimate_line(row: dict[str, object], key: str, label: str, unit: str) -> str | None:
+    value = row.get(key)
+    if value is None or pd.isna(value):
+        return None
+    lower = row.get(f"{key}_lower")
+    upper = row.get(f"{key}_upper")
+    prefix = f"- {label}: {float(value):.1f} {unit}"
+    if lower is not None and upper is not None and not pd.isna(lower) and not pd.isna(upper):
+        return f"{prefix} [{float(lower):.1f}, {float(upper):.1f}]"
+    return prefix
+
+
+def build_printable_recommendation_report(
+    input_conditions: dict[str, object],
+    top_row: dict | pd.Series,
+    context: ManualInputContext,
+    fatigue_schedule: pd.DataFrame,
+    sn_status: dict[str, object],
+    experiments: list[dict[str, str]] | None = None,
+) -> str:
+    row = dict(top_row)
+    route = _report_value(row.get("ht_class", "not available"))
+    score = row.get("ml_assisted_score", row.get("adjusted_score", row.get("score")))
+    recipe = _report_value(row.get("selected_recipe_summary", row.get("temperature_time_window")))
+    fatigue_context = _fatigue_validation_context(context)
+
+    lines: list[str] = [
+        "# Printable recommendation report",
+        "",
+        "## Process & Material Specifications",
+        "",
+        "### Full input conditions",
+    ]
+    for key, value in input_conditions.items():
+        lines.append(f"- {key}: {_report_value(value)}")
+
+    lines.extend(
+        [
+            "",
+            "## Recommended heat-treatment route",
+            "",
+            f"- Route: {route}",
+            f"- Proposed validation recipe: {recipe}",
+            f"- Peak temperature: {_report_value(row.get('recommended_peak_temperature_C'))} C",
+            f"- Total hold time: {_report_value(row.get('recommended_total_hold_h'))} h",
+            f"- Recommendation index: {float(score):.2f}" if score is not None and not pd.isna(score) else "- Recommendation index: not available",
+            f"- Evidence confidence: {_report_value(row.get('confidence'))}",
+            f"- Local feasibility: {_report_value(row.get('local_feasibility'))}",
+            f"- Fatigue validation context: {fatigue_context}",
+        ]
+    )
+
+    lines.extend(["", "## Expected static-property estimates", ""])
+    property_lines = [
+        _property_estimate_line(row, "predicted_UTS_MPa", "UTS", "MPa"),
+        _property_estimate_line(row, "predicted_YS_MPa", "YS", "MPa"),
+        _property_estimate_line(row, "predicted_elongation_pct", "Elongation", "%"),
+    ]
+    available_properties = [line for line in property_lines if line]
+    if available_properties:
+        lines.extend(available_properties)
+        lines.append("- Interpretation: these are evidence-bounded static-property estimates, not fatigue-life predictions.")
+    else:
+        lines.append("- No calibrated static-property estimate is available for the selected route.")
+
+    lines.extend(
+        [
+            "",
+            "## Fatigue validation schedule",
+            "",
+            "The schedule below defines experimental stress levels for validation. It does not report predicted survival.",
+        ]
+    )
+    if fatigue_schedule.empty:
+        lines.append("- No fatigue validation schedule is available.")
+    else:
+        for _, item in fatigue_schedule.iterrows():
+            lines.append(
+                "- "
+                f"sigma_a = {int(item['stress_amplitude_MPa'])} MPa; "
+                f"sigma_max = {int(item['sigma_max_MPa'])} MPa; "
+                f"sigma_min = {int(item['sigma_min_MPa'])} MPa; "
+                f"sigma_mean = {int(item['sigma_mean_MPa'])} MPa; "
+                f"target runout = {_report_value(item['target_runout_cycles'])} cycles"
+            )
+
+    lines.extend(
+        [
+            "",
+            "## S-N training status",
+            "",
+            f"- Reviewed S-N point rows: {_report_value(sn_status.get('reviewed_point_rows'))}",
+            f"- Registered S-N targets: {_report_value(sn_status.get('registered_targets'))}",
+            f"- Status: {_report_value(sn_status.get('status_message'))}",
+            f"- Boundary: {_report_value(sn_status.get('report_note'))}",
+        ]
+    )
+
+    if experiments:
+        lines.extend(["", "## Must-have experimental validation", ""])
+        for item in experiments:
+            lines.append(f"- {item['priority']}: {item['experiment']} - {item['reason']}")
+
+    lines.extend(
+        [
+            "",
+            "## Interpretation boundary",
+            "",
+            "The recommendation is a literature-supported experimental candidate for LPBF Inconel 718. "
+            "Publication-level claims require local heat-treatment execution, tensile or hardness validation, microstructural assessment, and fatigue testing when fatigue performance is claimed.",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def generate_text_recommendation(top_row: dict | pd.Series, context: ManualInputContext) -> str:
     row = dict(top_row)
     ht_class = str(row.get("ht_class", "the selected route"))
