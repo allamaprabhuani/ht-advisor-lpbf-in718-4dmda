@@ -83,7 +83,8 @@ except ImportError:
         for _, item in fatigue_schedule.iterrows():
             lines.append(
                 f"- sigma_a = {int(item['stress_amplitude_MPa'])} MPa; sigma_max = {int(item['sigma_max_MPa'])} MPa; "
-                f"sigma_min = {int(item['sigma_min_MPa'])} MPa; target runout = {item['target_runout_cycles']} cycles"
+                f"sigma_min = {int(item['sigma_min_MPa'])} MPa; sigma_mean = {int(item['sigma_mean_MPa'])} MPa; "
+                f"target runout = {item['target_runout_cycles']} cycles"
             )
         lines.extend(
             [
