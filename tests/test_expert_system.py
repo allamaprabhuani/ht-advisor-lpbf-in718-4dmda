@@ -99,6 +99,7 @@ def test_text_recommendation_reports_route_effects_and_stochastic_uncertainty():
 
     assert "ST_DA" in text
     assert "980 C for 1 h; 720 C for 8 h; 620 C for 8 h" in text
+    assert "recommended validation recipe" in text
     assert "R = 0.1" in text
     assert "1,000,000 cycles" in text
     assert "precipitation strengthening" in text

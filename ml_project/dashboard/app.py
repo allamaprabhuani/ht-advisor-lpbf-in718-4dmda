@@ -419,6 +419,7 @@ INPUT_HELP = {
     ),
     "section_size": (
         "Representative section size affects thermal-gradient risk and cycle-time interpretation. "
+        "Thin coupon means a low-thermal-mass specimen, approximately up to 3 mm wall thickness or up to 5 mm gauge diameter. "
         "Thin sections are less likely to require extended soak allowances. Moderate sections represent typical test coupons. "
         "Large thermal mass flags possible temperature-lag and cooling-uniformity concerns. Use not specified when dimensions are not yet fixed."
     ),
@@ -723,7 +724,7 @@ with tab1:
         m3.metric("Evidence confidence", str(top_row["confidence"]), help="Categorical confidence derived from the number of supporting literature records.")
         occupancy = top_row.get("estimated_furnace_occupancy_h", "not assessed")
         m4.metric("Estimated furnace occupancy", f"{float(occupancy):.1f} h" if pd.notna(occupancy) and occupancy != "not assessed" else "not assessed", help="Total expected hours of furnace time, excluding ramp rates.")
-        st.markdown("#### Selected validation recipe")
+        st.markdown("#### Proposed experimental recipe")
         recipe_cols = st.columns(3)
         recipe_cols[0].metric(
             "Peak temperature",
@@ -733,14 +734,14 @@ with tab1:
         recipe_cols[1].metric(
             "Total hold time",
             f"{float(top_row['recommended_total_hold_h']):.1f} h" if pd.notna(top_row.get("recommended_total_hold_h")) else "not specified",
-            help="Total scheduled hold time for the selected validation recipe.",
+            help="Total scheduled hold time for the proposed experimental recipe.",
         )
         recipe_cols[2].metric(
             "Fatigue validation context",
             f"R = {stress_ratio_R:g}; Nf = {int(target_life_cycles):,}",
             help="Stress ratio and target cycles for validation planning. This is not a fatigue-life prediction.",
         )
-        st.write(str(top_row.get("selected_recipe_summary", "No selected recipe is available.")))
+        st.write(str(top_row.get("selected_recipe_summary", "No proposed recipe is available.")))
         st.markdown("#### Text recommendation")
         st.info(generate_text_recommendation(top_row, manual_context))
         st.caption(
@@ -956,7 +957,7 @@ with tab1:
             with st.container(border=True):
                 cols = st.columns([1, 2, 1, 1])
                 cols[0].metric(f"Rank {int(row['ml_assisted_rank'])}", row["ht_class"], f"index {row['ml_assisted_score']:.2f}")
-                cols[1].write(f"Selected recipe: {row.get('selected_recipe_summary', row['temperature_time_window'])}")
+                cols[1].write(f"Proposed recipe: {row.get('selected_recipe_summary', row['temperature_time_window'])}")
                 cols[2].write(f"Evidence confidence: **{row['confidence']}**")
                 cols[3].write(f"Supporting records: **{row['evidence_count_seed']}**")
                 st.progress(max(0.0, min(float(row["ml_assisted_score"]), 1.0)), text=f"Recommendation index {float(row['ml_assisted_score']):.2f}")
@@ -964,13 +965,19 @@ with tab1:
                 st.caption(row["recommendation_reason"])
                 with st.expander("Rationale and evidence status"):
                     st.write(f"Evidence envelope: **{row['inside_evidence_envelope']}**")
-                    st.write(f"Selected validation recipe: **{row.get('selected_recipe_summary', 'not specified')}**")
+                    st.write(f"Recommended validation recipe: **{row.get('selected_recipe_summary', 'not specified')}**")
                     if pd.notna(row.get("recommended_peak_temperature_C")):
-                        st.write(f"Selected peak temperature: **{int(row['recommended_peak_temperature_C'])} C**")
+                        st.write(f"Recommended peak temperature: **{int(row['recommended_peak_temperature_C'])} C**")
                     if pd.notna(row.get("recommended_total_hold_h")):
-                        st.write(f"Selected total hold time: **{float(row['recommended_total_hold_h']):.1f} h**")
+                        st.write(f"Recommended total hold time: **{float(row['recommended_total_hold_h']):.1f} h**")
                     st.write(f"Fatigue validation context: **R = {stress_ratio_R:g}; Nf = {int(target_life_cycles):,} cycles**")
                     st.write(f"Supporting temperature-time window: {row['temperature_time_window']}")
+                    if str(row.get("ht_class", "")) == "CUSTOM_ST_DA":
+                        st.warning(
+                            "Short-cycle solution treatment is an exploratory thin coupon route. "
+                            "Use it only for low-thermal-mass coupons, approximately up to 3 mm wall thickness or up to 5 mm gauge diameter, "
+                            "and confirm the response by hardness, tensile testing, and microscopy."
+                        )
                     st.write(f"Local feasibility: **{row['local_feasibility']}**")
                     st.write(row["constraint_notes"])
                     st.write(f"Property-estimation scope: **{row['ml_assistance_scope']}**")
@@ -1035,6 +1042,7 @@ with tab2:
         s1.metric("Registered S-N targets", len(sn_targets), help="Candidate or confirmed fatigue figures registered for point-level digitisation.")
         s2.metric("Saved S-N figure images", saved_figures, help="Registered targets that already have a local snipped figure image.")
         s3.metric("Reviewed S-N points", reviewed_points, help="Digitised fatigue points that have passed manual metadata review.")
+        st.info("S-N curves have not yet been used for training; the current model uses reviewed static-property data and treats fatigue inputs as validation context.")
         if sn_audit_summary:
             a1, a2 = st.columns(2)
             a1.metric(

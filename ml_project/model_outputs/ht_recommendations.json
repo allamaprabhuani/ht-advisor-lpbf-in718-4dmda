@@ -56,7 +56,7 @@
     "evidence_count_seed": 5,
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
-    "recommendation_reason": "Locally feasible non-HIP route for validation under available furnace constraints; the expanded evidence base supports solution-plus-ageing sensitivity, but the exact shortened schedule remains an experimental candidate.",
+    "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
     "rank": 3
   },
   {
@@ -136,7 +136,7 @@
     "evidence_count_seed": 5,
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
-    "recommendation_reason": "Locally feasible non-HIP route for validation under available furnace constraints; the expanded evidence base supports solution-plus-ageing sensitivity, but the exact shortened schedule remains an experimental candidate.",
+    "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
     "rank": 3
   },
   {
@@ -196,7 +196,7 @@
     "evidence_count_seed": 5,
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
-    "recommendation_reason": "Locally feasible non-HIP route for validation under available furnace constraints; the expanded evidence base supports solution-plus-ageing sensitivity, but the exact shortened schedule remains an experimental candidate.",
+    "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
     "rank": 2
   },
   {
@@ -296,7 +296,7 @@
     "evidence_count_seed": 5,
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
-    "recommendation_reason": "Locally feasible non-HIP route for validation under available furnace constraints; the expanded evidence base supports solution-plus-ageing sensitivity, but the exact shortened schedule remains an experimental candidate.",
+    "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
     "rank": 3
   },
   {
@@ -416,7 +416,7 @@
     "evidence_count_seed": 5,
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
-    "recommendation_reason": "Locally feasible non-HIP route for validation under available furnace constraints; the expanded evidence base supports solution-plus-ageing sensitivity, but the exact shortened schedule remains an experimental candidate.",
+    "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
     "rank": 5
   },
   {
@@ -536,7 +536,7 @@
     "evidence_count_seed": 5,
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
-    "recommendation_reason": "Locally feasible non-HIP route for validation under available furnace constraints; the expanded evidence base supports solution-plus-ageing sensitivity, but the exact shortened schedule remains an experimental candidate.",
+    "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
     "rank": 5
   },
   {
@@ -656,7 +656,7 @@
     "evidence_count_seed": 5,
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
-    "recommendation_reason": "Locally feasible non-HIP route for validation under available furnace constraints; the expanded evidence base supports solution-plus-ageing sensitivity, but the exact shortened schedule remains an experimental candidate.",
+    "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
     "rank": 5
   },
   {

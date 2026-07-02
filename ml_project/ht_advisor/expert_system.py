@@ -224,7 +224,7 @@ def _route_effects(ht_class: str) -> str:
     effects = {
         "DA": "direct ageing can increase hardness through gamma-prime and gamma-double-prime precipitation, but residual stress, segregation, and lack-of-fusion defects may remain influential.",
         "ST_DA": "solution treatment followed by double ageing is expected to promote precipitation strengthening while reducing some solidification-related heterogeneity.",
-        "CUSTOM_ST_DA": "a shortened solution-treatment and double-ageing route can be practical for local validation while retaining the main precipitation-strengthening mechanism.",
+        "CUSTOM_ST_DA": "a shortened solution-treatment and double-ageing route can be practical for thin coupon screening, but it is experimental and can leave incomplete phase transformation in higher-thermal-mass sections.",
         "HA_ST_DA": "homogenisation can reduce segregation and Laves-phase effects before ageing, but it requires a higher temperature window and tighter process control.",
         "HIP_DA": "HIP can reduce internal porosity before ageing, which may improve fatigue response when defect populations dominate failure.",
         "HIP_ST_DA": "HIP combined with solution treatment and double ageing can combine pore closure with precipitation control, but it is retained here mainly as a benchmark route.",
@@ -335,7 +335,7 @@ def generate_text_recommendation(top_row: dict | pd.Series, context: ManualInput
     )
     return (
         f"The recommended primary route for the selected constraints is {ht_class}. "
-        f"The selected validation recipe is {selected_recipe}. "
+        f"The recommended validation recipe is {selected_recipe}. "
         f"The supporting literature window is {row.get('temperature_time_window', 'not specified')}. "
         f"Expected effects are that {_route_effects(ht_class)} "
         f"Local feasibility is assessed as {row.get('local_feasibility', 'not assessed')}: {row.get('constraint_notes', 'no constraint note recorded')} "
@@ -360,7 +360,7 @@ def build_model_specification() -> dict[str, object]:
         ],
         "outputs": [
             "ranked heat-treatment route",
-            "selected validation recipe with peak temperature and total hold time",
+            "recommended validation recipe with peak temperature and total hold time",
             "recommended temperature-time window",
             "fatigue validation context with stress ratio and cycles to failure",
             "estimated furnace occupancy",

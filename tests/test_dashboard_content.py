@@ -39,7 +39,7 @@ def test_dashboard_exposes_manual_inputs_and_auditable_model_views():
         "Manual experimental inputs",
         "Maximum practical cycle time",
         "Fatigue stress ratio, R",
-        "Selected validation recipe",
+        "Proposed experimental recipe",
         "Fatigue validation context",
         "build_manual_context_from_inputs",
         "inspect.signature",
@@ -58,6 +58,7 @@ def test_dashboard_input_controls_include_detailed_help_text():
         "Select the property objective used to weight the route ranking.",
         "Initial condition of the EOS LPBF Inconel 718 specimens before the proposed heat treatment.",
         "Representative section size affects thermal-gradient risk and cycle-time interpretation.",
+        "Thin coupon means a low-thermal-mass specimen, approximately up to 3 mm wall thickness or up to 5 mm gauge diameter.",
         "Surface condition is retained because fatigue response is sensitive to roughness and near-surface defects.",
         "Use this switch only when HIP is being considered as a literature benchmark.",
         "Decision posture controls how strongly the framework penalises limited evidence and local constraints.",
@@ -200,6 +201,8 @@ def test_dashboard_exposes_sn_preparation_audit():
         "sn_pdf_review_queue.csv",
         "sn_digitisation_audit_summary.json",
         "High-priority review sources",
+        "S-N curves have not yet been used for training",
+        "No reviewed S-N point rows are currently available",
     ]
     for phrase in required:
         assert phrase in APP_TEXT

@@ -32,6 +32,15 @@ def test_default_request_assumes_no_local_hip_access():
     assert all("HIP" not in r["ht_class"] for r in rows)
 
 
+def test_custom_short_cycle_route_is_limited_to_thin_coupon_screening():
+    rows = rank_heat_treatments(RecommendationRequest(target="balanced", allow_hip=False))
+    custom = next(row for row in rows if row["ht_class"] == "CUSTOM_ST_DA")
+    reason = custom["recommendation_reason"].lower()
+    assert "thin coupon" in reason
+    assert "exploratory" in reason
+    assert "incomplete phase transformation" in reason
+
+
 def test_hip_routes_remain_available_when_explicitly_enabled():
     req = RecommendationRequest(target="fatigue", allow_hip=True, confidence_mode="balanced")
     rows = rank_heat_treatments(req)

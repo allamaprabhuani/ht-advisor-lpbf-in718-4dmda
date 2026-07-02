@@ -84,7 +84,7 @@ BASE_ROUTES = {
         "fatigue": 0.68,
         "cost": 0.38,
         "evidence": 5,
-        "reason": "Locally feasible non-HIP route for validation under available furnace constraints; the expanded evidence base supports solution-plus-ageing sensitivity, but the exact shortened schedule remains an experimental candidate.",
+        "reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
     },
 }
 
