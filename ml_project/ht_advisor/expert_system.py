@@ -559,6 +559,7 @@ def build_model_specification() -> dict[str, object]:
             "recommended validation recipe with peak temperature and total hold time",
             "recommended temperature-time window",
             "fatigue validation context with stress ratio and cycles to failure",
+            "source-specific S-N curve evidence where reviewed literature marker points are available",
             "estimated furnace occupancy",
             "metallurgical rule flags",
             "local feasibility classification",
@@ -568,7 +569,8 @@ def build_model_specification() -> dict[str, object]:
         "uncertainty_treatment": [
             "evidence count contributes to the recommendation index",
             "routes outside the selected process envelope are penalised rather than silently removed",
-            "stochastic AM response is reported qualitatively until condition-level property intervals are expanded",
+            "source-specific literature S-N fits are kept separate by stress ratio and heat-treatment condition",
+            "stochastic AM response is reported with explicit validation boundaries until local fatigue data are added",
             "delta-phase fraction, Laves-phase dissolution, precipitate morphology, and defect-size distributions are not explicitly resolved",
             "local experimental results should be added as validation data before making final performance claims",
         ],

@@ -75,7 +75,7 @@ def test_sn_preparation_audit_report_exists_and_records_gates():
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     assert summary["pdf_count"] == 36
     assert summary["registered_sn_targets"] >= 21
-    assert summary["reviewed_sn_points"] == 0
+    assert summary["reviewed_sn_points"] >= 38
     assert "stress_metric_unknown" in summary["blocking_gates"]
     assert "figure_identity_unverified" in summary["blocking_gates"]
 

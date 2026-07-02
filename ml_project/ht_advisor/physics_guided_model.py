@@ -183,7 +183,7 @@ def fit_physics_guided_models(training_table: pd.DataFrame) -> dict[str, Any]:
         },
         "scope_statement": (
             f"The fitted model is calibrated on reviewed LPBF/SLM Inconel 718 property rows (n = {int(len(training_table))}). "
-            "It estimates static tensile indicators where data are sufficient and uses fatigue physics qualitatively until condition-level S-N data are curated. "
+            "It estimates static tensile indicators where data are sufficient and uses fatigue physics together with separate source-specific S-N fits where reviewed marker data are available. "
             "The model does not explicitly resolve delta-phase fraction, Laves-phase dissolution, precipitate morphology, or defect-size distributions."
         ),
     }

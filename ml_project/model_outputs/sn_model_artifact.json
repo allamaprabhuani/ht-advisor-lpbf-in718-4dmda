@@ -1,0 +1,17 @@
+{
+  "model_family": "physics-constrained Basquin regression",
+  "training_scope": "condition-specific S-N fits for reviewed literature marker points",
+  "reviewed_points": 38,
+  "trained_condition_models": 5,
+  "stress_ratio_groups": [
+    "-1",
+    "not reported"
+  ],
+  "runout_handling": "Runout markers are retained in sn_curve_points.csv but excluded from least-squares Basquin fitting.",
+  "claim_boundary": "Not a design allowable. Curves are source-specific literature fits for screening and experimental planning.",
+  "data_files": {
+    "reviewed_points": "ml_project/data/sn_curve_points.csv",
+    "model_summary": "ml_project/model_outputs/sn_model_summary.csv",
+    "prediction_grid": "ml_project/model_outputs/sn_model_prediction_grid.csv"
+  }
+}

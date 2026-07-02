@@ -227,3 +227,18 @@ def test_dashboard_exposes_printable_recommendation_report():
     ]
     for phrase in required:
         assert phrase in APP_TEXT
+
+
+def test_dashboard_exposes_trained_sn_fatigue_module_without_design_allowable_claims():
+    required = [
+        "S-N Fatigue Module",
+        "physics-constrained Basquin",
+        "Literature S-N curves and reviewed marker points",
+        "Not a design allowable",
+        "sn_model_summary.csv",
+        "sn_model_prediction_grid.csv",
+        "sn_curve_points.csv",
+        "line_dash",
+    ]
+    for phrase in required:
+        assert phrase in APP_TEXT

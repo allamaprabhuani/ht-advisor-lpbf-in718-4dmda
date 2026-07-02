@@ -354,6 +354,9 @@ sn_targets_path = DATA / "sn_digitisation_targets.csv"
 sn_points_path = DATA / "sn_curve_points.csv"
 sn_review_queue_path = REPORTS / "sn_pdf_review_queue.csv"
 sn_audit_summary_path = REPORTS / "sn_digitisation_audit_summary.json"
+sn_model_summary_path = OUTPUTS / "sn_model_summary.csv"
+sn_model_prediction_grid_path = OUTPUTS / "sn_model_prediction_grid.csv"
+sn_model_artifact_path = OUTPUTS / "sn_model_artifact.json"
 
 recs = load_csv(recs_path, file_fingerprint(recs_path))
 sources = load_csv(sources_path, file_fingerprint(sources_path))
@@ -369,6 +372,9 @@ sn_targets = load_csv(sn_targets_path, file_fingerprint(sn_targets_path))
 sn_points = load_csv(sn_points_path, file_fingerprint(sn_points_path))
 sn_review_queue = load_csv(sn_review_queue_path, file_fingerprint(sn_review_queue_path))
 sn_audit_summary = load_json(sn_audit_summary_path, file_fingerprint(sn_audit_summary_path))
+sn_model_summary = load_csv(sn_model_summary_path, file_fingerprint(sn_model_summary_path))
+sn_model_prediction_grid = load_csv(sn_model_prediction_grid_path, file_fingerprint(sn_model_prediction_grid_path))
+sn_model_artifact = load_json(sn_model_artifact_path, file_fingerprint(sn_model_artifact_path))
 supporting_literature = build_supporting_literature_table()
 
 ACADEMIC_COLORS = ["#2f5d62", "#5b7f95", "#8a6f3d", "#6b7280", "#a44a3f", "#7d8f69"]
@@ -582,7 +588,7 @@ def _build_equation_table() -> pd.DataFrame:
             {
                 "name": "Basquin fatigue relation",
                 "latex": r"\sigma_a = \sigma_f' \left(2N_f\right)^b",
-                "definition": "Variables are defined below; this is used only for fatigue interpretation until local S-N data are fitted.",
+                "definition": "Variables are defined below; current S-N fitting is limited to reviewed source-specific literature marker points.",
             },
             {
                 "name": "Recommendation-index expression",
@@ -886,6 +892,7 @@ fatigue_schedule = build_fatigue_validation_schedule(
     target_life_cycles=int(target_life_cycles) if target_life_cycles else None,
 )
 sn_training_status = build_sn_training_status(sn_points=sn_points, sn_targets=sn_targets)
+sn_model_available = not sn_model_summary.empty and not sn_model_prediction_grid.empty
 input_conditions = {
     "Primary design objective": target,
     "Initial material state": initial_state,
@@ -975,10 +982,16 @@ with tab1:
         )
         st.divider()
         st.markdown("#### Printable recommendation report")
-        st.caption(
-            "The report below is formatted for research-team discussion and local printing. "
-            "S-N curves have not yet been trained; Fatigue life is not predicted in the current release."
-        )
+        if sn_model_available:
+            st.caption(
+                "The report below is formatted for research-team discussion and local printing. "
+                "S-N curves are trained only for source-specific literature conditions and are not design allowables."
+            )
+        else:
+            st.caption(
+                "The report below is formatted for research-team discussion and local printing. "
+                "S-N curves have not yet been trained; Fatigue life is not predicted in the current release."
+            )
         report_markdown = build_printable_report_safely(
             input_conditions=input_conditions,
             top_row=top_row,
@@ -1115,6 +1128,11 @@ with tab1:
             st.markdown("#### S-N training status")
             st.write(str(sn_training_status["status_message"]))
             st.write(str(sn_training_status["report_note"]))
+            if sn_model_available:
+                st.write(
+                    f"Trained S-N module: {len(sn_model_summary)} source-specific physics-constrained Basquin curves "
+                    f"from {len(sn_points)} reviewed marker points. Not a design allowable."
+                )
             st.markdown("#### Markdown report preview")
             st.markdown(report_markdown)
             st.markdown("</div>", unsafe_allow_html=True)
@@ -1413,7 +1431,13 @@ with tab2:
         s1.metric("Registered S-N targets", len(sn_targets), help="Candidate or confirmed fatigue figures registered for point-level digitisation.")
         s2.metric("Saved S-N figure images", saved_figures, help="Registered targets that already have a local snipped figure image.")
         s3.metric("Reviewed S-N points", reviewed_points, help="Digitised fatigue points that have passed manual metadata review.")
-        st.info("S-N curves have not yet been used for training; the current model uses reviewed static-property data and treats fatigue inputs as validation context.")
+        if sn_model_available:
+            st.info(
+                "S-N curves have been trained for source-specific literature conditions using reviewed marker points. "
+                "The current recommendation system uses these curves as fatigue evidence context; route ranking remains constrained by stress ratio, surface state, and source envelope."
+            )
+        else:
+            st.info("S-N curves have not yet been used for training; the current model uses reviewed static-property data and treats fatigue inputs as validation context.")
         if sn_audit_summary:
             a1, a2 = st.columns(2)
             a1.metric(
@@ -1453,6 +1477,12 @@ with tab2:
                 st.info("No reviewed S-N point rows are currently available. Registered targets must be digitised and reviewed before fatigue-life fitting.")
             else:
                 st.dataframe(sn_points, width="stretch")
+                st.download_button(
+                    "Download reviewed S-N point table",
+                    sn_points.to_csv(index=False).encode("utf-8"),
+                    file_name="sn_curve_points.csv",
+                    mime="text/csv",
+                )
         if not sn_review_queue.empty:
             with st.expander("S-N PDF review queue", expanded=False):
                 st.caption(
@@ -1664,6 +1694,113 @@ with tab4:
     else:
         st.warning("No curated mechanical-property records are currently available.")
 
+    st.divider()
+    st.markdown("#### S-N Fatigue Module")
+    st.write(
+        "The fatigue module uses a physics-constrained Basquin formulation fitted to reviewed literature marker points. "
+        "It is presented as screening evidence for experimental planning. Not a design allowable."
+    )
+    if sn_model_artifact:
+        sm1, sm2, sm3 = st.columns(3)
+        sm1.metric("Reviewed S-N points", sn_model_artifact.get("reviewed_points", len(sn_points)))
+        sm2.metric("Trained S-N curves", sn_model_artifact.get("trained_condition_models", len(sn_model_summary)))
+        sm3.metric("Model family", "Basquin")
+        st.caption(
+            "Files: sn_curve_points.csv, sn_model_summary.csv, and sn_model_prediction_grid.csv. "
+            "Curves are dashed because they are literature-derived condition fits, not statistical fatigue allowables."
+        )
+    if sn_model_available:
+        st.markdown("#### Literature S-N curves and reviewed marker points")
+        plot_points = sn_points.copy()
+        plot_points["cycles_to_failure"] = pd.to_numeric(plot_points["cycles_to_failure"], errors="coerce")
+        plot_points["stress_amplitude_MPa"] = pd.to_numeric(plot_points["stress_amplitude_MPa"], errors="coerce")
+        plot_points["runout_flag"] = plot_points["runout_flag"].astype(str)
+        curve_fig = px.scatter(
+            plot_points,
+            x="cycles_to_failure",
+            y="stress_amplitude_MPa",
+            color="condition_id",
+            symbol="runout_flag",
+            color_discrete_sequence=ACADEMIC_COLORS,
+            labels={
+                "cycles_to_failure": "Cycles to failure, Nf",
+                "stress_amplitude_MPa": "Stress amplitude, sigma_a (MPa)",
+                "condition_id": "Condition",
+                "runout_flag": "Runout flag",
+            },
+            custom_data=["source_id", "figure_id", "heat_treatment_class", "stress_ratio_R", "runout_flag"],
+        )
+        curve_fig.update_traces(
+            marker=dict(size=9, line=dict(width=1, color="#17212b")),
+            hovertemplate=(
+                "Source: %{customdata[0]}<br>"
+                "Figure: %{customdata[1]}<br>"
+                "Route: %{customdata[2]}<br>"
+                "R: %{customdata[3]}<br>"
+                "Runout: %{customdata[4]}<br>"
+                "Nf: %{x:.2e}<br>"
+                "sigma_a: %{y:.1f} MPa<br>"
+                "<extra></extra>"
+            ),
+        )
+        for _, subset in sn_model_prediction_grid.groupby("condition_id"):
+            line_dash_style = "dash"
+            curve_fig.add_trace(
+                go.Scatter(
+                    x=subset["cycles_to_failure"],
+                    y=subset["stress_amplitude_MPa"],
+                    mode="lines",
+                    name=f"{subset['condition_id'].iloc[0]} fit",
+                    line=dict(width=2, dash=line_dash_style),
+                    hovertemplate="Condition: %{fullData.name}<br>Nf: %{x:.2e}<br>sigma_a: %{y:.1f} MPa<extra></extra>",
+                )
+            )
+            curve_fig.add_trace(
+                go.Scatter(
+                    x=pd.concat([subset["cycles_to_failure"], subset["cycles_to_failure"].iloc[::-1]]),
+                    y=pd.concat([subset["stress_upper_MPa"], subset["stress_lower_MPa"].iloc[::-1]]),
+                    fill="toself",
+                    mode="lines",
+                    line=dict(width=0),
+                    showlegend=False,
+                    hoverinfo="skip",
+                    opacity=0.12,
+                    name=f"{subset['condition_id'].iloc[0]} empirical band",
+                )
+            )
+        curve_fig.update_xaxes(type="log", title="Cycles to failure, Nf")
+        curve_fig.update_yaxes(title="Stress amplitude, sigma_a (MPa)")
+        st.plotly_chart(academic_layout(curve_fig, "Literature S-N curves and reviewed marker points", height=620), width="stretch")
+        st.caption(
+            "Interpretation: fitted lines are dashed condition-specific Basquin regressions. "
+            "Runouts are plotted but excluded from least-squares fitting. R = -1 and not-reported stress-ratio data are not pooled."
+        )
+        st.markdown("#### S-N model specification and traceability")
+        st.dataframe(
+            sn_model_summary,
+            width="stretch",
+            column_config={
+                "source_pdf": st.column_config.TextColumn("Source PDF"),
+                "model_boundary": st.column_config.TextColumn("Boundary"),
+            },
+        )
+        st.download_button(
+            "Download S-N model summary",
+            sn_model_summary.to_csv(index=False).encode("utf-8"),
+            file_name="sn_model_summary.csv",
+            mime="text/csv",
+        )
+        st.download_button(
+            "Download S-N curve grid",
+            sn_model_prediction_grid.to_csv(index=False).encode("utf-8"),
+            file_name="sn_model_prediction_grid.csv",
+            mime="text/csv",
+        )
+    else:
+        st.info(
+            "S-N curves have not yet been trained. No reviewed S-N point rows are currently available, or model artifacts are missing."
+        )
+
 with tab5:
     st.subheader("Validation Plan")
     st.markdown("#### Must-have experimental validation")
@@ -1672,7 +1809,7 @@ with tab5:
     st.markdown("#### Fatigue validation stress schedule")
     st.write(
         "Use these levels as a screening schedule for local fatigue validation. "
-        "Life at each stress level must be measured experimentally; the current model has not fitted S-N curves."
+        "Life at each stress level must be measured experimentally; the fitted literature S-N curves are screening evidence, not local survival estimates."
     )
     st.dataframe(fatigue_schedule, width="stretch", column_config=FATIGUE_SCHEDULE_COLUMN_CONFIG)
     st.markdown(
@@ -1713,7 +1850,7 @@ with tab6:
     st.markdown("#### Physics used in the recommendation")
     st.write(
         "The equations below describe the feature construction and recommendation index used for interpretation. "
-        "They are not presented as a fitted fatigue-life law for the current dataset."
+        "The Basquin relation is fitted only for reviewed source-specific literature marker sets and is not a design allowable for the local specimens."
     )
     for _, equation in build_equation_table().iterrows():
         st.markdown(f"**{equation['name']}**")
@@ -1731,9 +1868,9 @@ with tab6:
                 {"symbol": "R", "definition": "Universal gas constant."},
                 {"symbol": "T_ref", "definition": "Reference temperature for the thermal activation index."},
                 {"symbol": "sigma_a", "definition": "Stress amplitude in the Basquin fatigue relation."},
-                {"symbol": "sigma_f'", "definition": "Fatigue-strength coefficient; not fitted in the current dashboard."},
-                {"symbol": "N_f", "definition": "Cycles to failure; not fitted until local S-N data are available."},
-                {"symbol": "b", "definition": "Basquin exponent; not fitted in the current dashboard."},
+                {"symbol": "sigma_f'", "definition": "Fatigue-strength coefficient fitted only for reviewed source-specific S-N marker sets."},
+                {"symbol": "N_f", "definition": "Cycles to failure; local values must be measured for the selected specimen and stress ratio."},
+                {"symbol": "b", "definition": "Basquin exponent fitted only where a reviewed condition has at least three failure points."},
                 {"symbol": "s_rec", "definition": "Final recommendation index."},
                 {"symbol": "s_evidence", "definition": "Evidence-weighted and constraint-adjusted route score."},
                 {"symbol": "s_property", "definition": "Calibrated static-property index when sufficient reviewed data exist."},
@@ -1746,7 +1883,7 @@ with tab6:
     st.write(
         "The Evidence Base tab contains the S-N digitisation register. "
         "Registered figures are traceable to source identifier, PDF filename, page, figure image, and review status. "
-        "Digitised points are not used for model fitting until each point has been reviewed with stress ratio, test temperature, surface condition, build orientation, and heat-treatment metadata."
+        "Only reviewed marker points with stress metric, test temperature, stress ratio, and heat-treatment metadata are allowed into the literature S-N fitting table."
     )
     st.markdown("#### Build-orientation coordinate convention")
     st.write(
@@ -1813,8 +1950,8 @@ with tab6:
         "The model does not explicitly track delta-phase fraction, Laves-phase dissolution, precipitate morphology, or defect-size distribution; these quantities require metallographic and defect-characterisation measurements."
     )
     st.warning(
-        "Static tensile indicators only: fatigue is defect-controlled in non-HIP LPBF Inconel 718. "
-        "Fatigue claims require S-N data, defect characterization, and surface-condition records."
+        "The current literature S-N fits do not replace local fatigue testing. "
+        "Fatigue claims for non-HIP LPBF Inconel 718 require local S-N data, defect characterization, and surface-condition records."
     )
     st.markdown("#### Practical interpretation")
     st.write(

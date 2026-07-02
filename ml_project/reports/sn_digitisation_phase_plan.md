@@ -7,12 +7,11 @@ This report is generated from the local corpus and source metadata. It does not 
 - PDFs in local corpus: 36
 - Registered S-N targets: 21
 - Saved S-N figure images: 12
-- Reviewed S-N points: 0
+- Reviewed S-N points: 38
 - High-priority review sources: 26
 
 ## Blocking Gates Before Fatigue Model Use
 
-- no_reviewed_sn_points
 - stress_metric_unknown
 - figure_identity_unverified
 - source_page_missing
