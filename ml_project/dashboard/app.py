@@ -998,7 +998,7 @@ with tab1:
             st.markdown("<div class='print-report'>", unsafe_allow_html=True)
             st.markdown("### Process & Material Specifications")
             st.markdown("#### Full input conditions")
-            st.dataframe(pd.DataFrame([{"condition": key, "value": value} for key, value in input_conditions.items()]), width="stretch", hide_index=True)
+            st.dataframe(pd.DataFrame([{"condition": key, "value": str(value)} for key, value in input_conditions.items()]), width="stretch", hide_index=True)
             st.markdown("#### Recommended heat-treatment route")
             report_cols = st.columns(4)
             report_cols[0].metric("Route", str(top_row["ht_class"]))
