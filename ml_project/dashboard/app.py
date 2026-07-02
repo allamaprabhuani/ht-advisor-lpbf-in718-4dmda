@@ -24,12 +24,37 @@ from ml_project.ht_advisor.dashboard_data import (
 from ml_project.ht_advisor.expert_system import (
     ManualInputContext,
     apply_manual_inputs,
-    build_fatigue_validation_schedule,
     build_must_have_experiments,
     build_model_specification,
     build_raw_training_data_table,
     generate_text_recommendation,
 )
+try:
+    from ml_project.ht_advisor.expert_system import build_fatigue_validation_schedule
+except ImportError:
+    def build_fatigue_validation_schedule(
+        stress_ratio_R: float = 0.1,
+        target_life_cycles: int | None = 1000000,
+        stress_amplitudes_MPa: list[int] | None = None,
+    ) -> pd.DataFrame:
+        amplitudes = stress_amplitudes_MPa or [300, 350, 400, 450]
+        rows = []
+        for amplitude in amplitudes:
+            sigma_max = 2.0 * float(amplitude) / (1.0 - float(stress_ratio_R))
+            sigma_min = float(stress_ratio_R) * sigma_max
+            sigma_mean = 0.5 * (sigma_max + sigma_min)
+            rows.append(
+                {
+                    "stress_amplitude_MPa": int(amplitude),
+                    "stress_ratio_R": round(float(stress_ratio_R), 3),
+                    "sigma_max_MPa": int(round(sigma_max)),
+                    "sigma_min_MPa": int(round(sigma_min)),
+                    "sigma_mean_MPa": int(round(sigma_mean)),
+                    "target_runout_cycles": int(target_life_cycles) if target_life_cycles else "not specified",
+                    "interpretation": "validation stress level, not predicted life",
+                }
+            )
+        return pd.DataFrame(rows)
 try:
     from ml_project.ht_advisor.expert_system import build_example_input_combinations, select_recommendation_subset
 except ImportError:
