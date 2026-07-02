@@ -215,7 +215,7 @@ def test_dashboard_exposes_sn_preparation_audit():
 def test_dashboard_exposes_printable_recommendation_report():
     required = [
         "Printable recommendation report",
-        "Download printable report",
+        "Download full report",
         "Full input conditions",
         "Expected static-property estimates",
         "S-N training status",
@@ -246,6 +246,11 @@ def test_dashboard_exposes_trained_sn_fatigue_module_without_design_allowable_cl
 
 def test_dashboard_print_area_exposes_technician_instruction_sheet():
     required = [
+        "Print / export",
+        "Print visible report",
+        "window.print()",
+        "Download full report",
+        "Download technician sheet",
         "Technician heat-treatment instruction sheet",
         "draft work instruction for technician review",
         "Specimen or batch ID",

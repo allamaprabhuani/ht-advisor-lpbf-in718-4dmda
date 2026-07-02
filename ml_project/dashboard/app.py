@@ -232,6 +232,18 @@ def build_printable_report_safely(
         for item in experiments or []:
             lines.append(f"- {item['priority']}: {item['experiment']} - {item['reason']}")
         return "\n".join(lines)
+
+
+def extract_technician_sheet(report_markdown: str) -> str:
+    start_heading = "## Technician heat-treatment instruction sheet"
+    end_heading = "## Expected static-property estimates"
+    start = report_markdown.find(start_heading)
+    if start < 0:
+        return report_markdown
+    end = report_markdown.find(end_heading, start)
+    if end < 0:
+        return report_markdown[start:].strip()
+    return report_markdown[start:end].strip()
 try:
     from ml_project.ht_advisor.expert_system import build_fatigue_validation_schedule
 except ImportError:
@@ -1065,12 +1077,46 @@ with tab1:
             sn_status=sn_training_status,
             experiments=build_must_have_experiments(str(top_row["ht_class"]), allow_hip),
         )
-        st.download_button(
-            "Download printable report",
-            report_markdown.encode("utf-8"),
-            file_name=f"ht_advisor_{str(top_row['ht_class']).lower()}_recommendation_report.md",
-            mime="text/markdown",
-            help="Download a Markdown report containing input conditions, recommendation details, static estimates, validation schedule, and S-N model status.",
+        technician_sheet_markdown = extract_technician_sheet(report_markdown)
+        st.markdown("#### Print / export")
+        print_col, full_report_col, technician_col = st.columns(3)
+        with print_col:
+            st.markdown(
+                """
+                <button onclick="window.print()" style="
+                    width: 100%;
+                    padding: 0.58rem 0.75rem;
+                    border: 1px solid #2f5d62;
+                    border-radius: 6px;
+                    background: #2f5d62;
+                    color: white;
+                    font: 600 14px Arial, sans-serif;
+                    cursor: pointer;">
+                    Print visible report
+                </button>
+                """,
+                unsafe_allow_html=True,
+            )
+        with full_report_col:
+            st.download_button(
+                "Download full report",
+                report_markdown.encode("utf-8"),
+                file_name=f"ht_advisor_{str(top_row['ht_class']).lower()}_recommendation_report.md",
+                mime="text/markdown",
+                help="Download a Markdown report containing input conditions, recommendation details, technician instructions, static estimates, validation schedule, and S-N model status.",
+                width="stretch",
+            )
+        with technician_col:
+            st.download_button(
+                "Download technician sheet",
+                technician_sheet_markdown.encode("utf-8"),
+                file_name=f"ht_advisor_{str(top_row['ht_class']).lower()}_technician_sheet.md",
+                mime="text/markdown",
+                help="Download only the heat-treatment instruction sheet for technician review and completion.",
+                width="stretch",
+            )
+        st.caption(
+            "Use the print button for the visible report, or download the Markdown files for review, completion, and local document control."
         )
         with st.container(border=True):
             st.markdown("<div class='print-report'>", unsafe_allow_html=True)
