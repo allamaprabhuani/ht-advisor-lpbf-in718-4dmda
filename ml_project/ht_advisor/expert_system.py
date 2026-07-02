@@ -416,6 +416,97 @@ def _property_estimate_line(row: dict[str, object], key: str, label: str, unit: 
     return prefix
 
 
+def _recipe_steps(recipe: str) -> list[dict[str, object]]:
+    steps: list[dict[str, object]] = []
+    for match in re.finditer(r"(\d{3,4})\s*C", recipe or ""):
+        temperature = int(match.group(1))
+        nearby = (recipe or "")[match.end() : match.end() + 40]
+        time_match = re.search(
+            r"(?:/|for|near|about|\s)(\d+(?:\.\d+)?)(?:\s*-\s*(\d+(?:\.\d+)?))?\s*h",
+            nearby,
+            flags=re.IGNORECASE,
+        )
+        hold_h = float(time_match.group(2) or time_match.group(1)) if time_match else None
+        steps.append({"step": len(steps) + 1, "temperature_C": temperature, "hold_h": hold_h})
+    return steps
+
+
+def _technician_instruction_lines(
+    input_conditions: dict[str, object],
+    row: dict[str, object],
+    context: ManualInputContext,
+    route: str,
+    recipe: str,
+) -> list[str]:
+    steps = _recipe_steps(recipe)
+    lines = [
+        "",
+        "## Technician heat-treatment instruction sheet",
+        "",
+        "- Instruction status: draft work instruction for technician review; verify against the local furnace standard operating procedure before processing.",
+        "- Do not begin heat treatment until the required blanks below are completed and the route is approved by the process owner.",
+        "",
+        "### Material and specimen identification",
+        "",
+        "- Alloy and process: LPBF Inconel 718",
+        "- Specimen or batch ID: to be completed",
+        f"- Initial material state: {_report_value(input_conditions.get('Initial material state', context.initial_material_state))}",
+        f"- Build orientation: {_report_value(input_conditions.get('Build orientation', context.build_orientation))}",
+        f"- Surface condition: {_report_value(input_conditions.get('Surface condition', context.surface_condition))}",
+        f"- Representative section size: {_report_value(input_conditions.get('Representative section size', context.section_size))}",
+        "- Number of specimens: to be completed",
+        "- Drawing or coupon geometry reference: to be completed",
+        "",
+        "### Equipment and furnace programme",
+        "",
+        "- Furnace ID: to be completed",
+        "- Furnace programme ID: to be completed",
+        f"- Recommended route: {route}",
+        f"- Approved recipe: {recipe}",
+        f"- Maximum set point in this route: {_report_value(row.get('recommended_peak_temperature_C'))} C",
+        f"- Total specified hold time: {_report_value(row.get('recommended_total_hold_h'))} h",
+        f"- Maximum permitted furnace temperature from input: {_report_value(context.furnace_limit_C)} C",
+        f"- Maximum practical cycle time from input: {_report_value(context.maximum_cycle_hours)} h",
+        "- Planning ramp rate used for the dashboard estimate: 10 C/min; use the approved furnace programme and record the actual ramp rate.",
+        "- Furnace atmosphere, vacuum, or shielding gas: to be completed",
+        "- Thermocouple or witness coupon location: to be completed",
+        "",
+        "### Nominal thermal programme",
+        "",
+        "| Step | Action | Set point | Hold time | Cooling or transfer note |",
+        "| --- | --- | --- | --- | --- |",
+    ]
+    if steps:
+        for item in steps:
+            hold = f"{_report_value(item['hold_h'])} h" if item["hold_h"] is not None else "to be confirmed"
+            note = "Proceed directly to the next specified step unless the local furnace procedure requires an intermediate cool."
+            lines.append(
+                f"| {int(item['step'])} | Hold at temperature | {int(item['temperature_C'])} C | {hold} | {note} |"
+            )
+    else:
+        lines.append("| 1 | Thermal cycle | to be completed | to be completed | Recipe could not be parsed automatically. |")
+    lines.extend(
+        [
+            f"- Final cooling method: {_report_value(context.cooling_condition)}",
+            "",
+            "### Required process records",
+            "",
+            "- Confirm furnace calibration is in date before loading.",
+            "- Record actual ramp rate, soak start time, soak end time, and actual cooling condition.",
+            "- Record specimen placement, fixture or tray arrangement, and thermocouple or witness coupon position.",
+            "- Record any deviation from the programme before using the specimens for property claims.",
+            "- Post-treatment checks: hardness or tensile coupon, surface condition record, and microstructural assessment where required by the validation plan.",
+            "",
+            "### Sign-off",
+            "",
+            "- Operator sign-off: to be completed",
+            "- Process owner approval: to be completed",
+            "- Date and time: to be completed",
+        ]
+    )
+    return lines
+
+
 def build_printable_recommendation_report(
     input_conditions: dict[str, object],
     top_row: dict | pd.Series,
@@ -455,6 +546,8 @@ def build_printable_recommendation_report(
             f"- Fatigue validation context: {fatigue_context}",
         ]
     )
+
+    lines.extend(_technician_instruction_lines(input_conditions, row, context, route, recipe))
 
     lines.extend(["", "## Expected static-property estimates", ""])
     property_lines = [

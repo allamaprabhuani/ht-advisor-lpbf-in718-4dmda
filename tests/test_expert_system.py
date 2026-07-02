@@ -276,6 +276,71 @@ def test_printable_report_includes_inputs_recipe_static_estimates_and_validation
     assert "Must-have experimental validation" in report
 
 
+def test_printable_report_contains_technician_heat_treatment_instruction_sheet():
+    schedule = build_fatigue_validation_schedule(stress_ratio_R=0.1, target_life_cycles=1000000, stress_amplitudes_MPa=[300])
+    report = build_printable_recommendation_report(
+        input_conditions={
+            "Initial material state": "EOS-like LPBF, machined",
+            "Build orientation": "vertical",
+            "Surface condition": "machined",
+            "Representative section size": "thin section",
+            "Maximum furnace temperature": "1065 C",
+            "Maximum practical cycle time": "24 h",
+            "Cooling condition": "controlled furnace cooling",
+        },
+        top_row={
+            "ht_class": "ST_DA",
+            "selected_recipe_summary": "980 C for 1 h; 720 C for 8 h; 620 C for 8 h",
+            "temperature_time_window": "Solution treatment about 980-1095 C for 1-2 h, then ageing about 720 C/8 h and 620 C/8 h",
+            "recommended_peak_temperature_C": 980,
+            "recommended_total_hold_h": 17.0,
+            "ml_assisted_score": 0.81,
+            "confidence": "medium",
+            "local_feasibility": "feasible under selected constraints",
+        },
+        context=ManualInputContext(
+            furnace_limit_C=1065,
+            maximum_cycle_hours=24,
+            section_size="thin section",
+            surface_condition="machined",
+            build_orientation="vertical",
+            initial_material_state="EOS-like LPBF, machined",
+            cooling_condition="controlled furnace cooling",
+            target_life_cycles=1000000,
+            stress_ratio_R=0.1,
+        ),
+        fatigue_schedule=schedule,
+        sn_status={
+            "sn_model_trained": True,
+            "reviewed_point_rows": 38,
+            "registered_targets": 21,
+            "status_message": "S-N point review has reached the minimum fitting threshold.",
+            "report_note": "Not a design allowable.",
+        },
+        experiments=build_must_have_experiments("ST_DA", allow_hip=False),
+    )
+
+    required = [
+        "Technician heat-treatment instruction sheet",
+        "Instruction status: draft work instruction for technician review",
+        "Do not begin heat treatment until the required blanks below are completed",
+        "Material and specimen identification",
+        "Specimen or batch ID: to be completed",
+        "Equipment and furnace programme",
+        "Furnace ID: to be completed",
+        "Nominal thermal programme",
+        "Step | Action | Set point | Hold time | Cooling or transfer note",
+        "Hold at temperature | 980 C | 1 h",
+        "Hold at temperature | 720 C | 8 h",
+        "Hold at temperature | 620 C | 8 h",
+        "Final cooling method: controlled furnace cooling",
+        "Required process records",
+        "Operator sign-off",
+    ]
+    for phrase in required:
+        assert phrase in report
+
+
 def test_select_recommendation_subset_falls_back_and_reports_out_of_grid_fields():
     rows = pd.DataFrame(
         [

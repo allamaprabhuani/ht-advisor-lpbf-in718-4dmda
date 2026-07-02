@@ -242,3 +242,19 @@ def test_dashboard_exposes_trained_sn_fatigue_module_without_design_allowable_cl
     ]
     for phrase in required:
         assert phrase in APP_TEXT
+
+
+def test_dashboard_print_area_exposes_technician_instruction_sheet():
+    required = [
+        "Technician heat-treatment instruction sheet",
+        "draft work instruction for technician review",
+        "Specimen or batch ID",
+        "Furnace ID",
+        "Furnace programme ID",
+        "Nominal thermal programme",
+        "Final cooling method",
+        "Required process records",
+        "Operator sign-off",
+    ]
+    for phrase in required:
+        assert phrase in APP_TEXT

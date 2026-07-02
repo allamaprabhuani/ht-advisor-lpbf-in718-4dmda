@@ -69,6 +69,38 @@ except ImportError:
                 f"- Recommendation index: {float(row.get('ml_assisted_score', row.get('adjusted_score', 0.0))):.2f}",
                 f"- Fatigue validation context: R = {context.stress_ratio_R:g}; Nf = {context.target_life_cycles:,} cycles" if context.target_life_cycles else f"- Fatigue validation context: R = {context.stress_ratio_R:g}; Nf not specified",
                 "",
+                "## Technician heat-treatment instruction sheet",
+                "",
+                "- Instruction status: draft work instruction for technician review; verify against the local furnace standard operating procedure before processing.",
+                "- Do not begin heat treatment until the required blanks below are completed and the route is approved by the process owner.",
+                "",
+                "### Material and specimen identification",
+                "",
+                "- Specimen or batch ID: to be completed",
+                f"- Initial material state: {context.initial_material_state}",
+                f"- Build orientation: {context.build_orientation}",
+                f"- Surface condition: {context.surface_condition}",
+                f"- Representative section size: {context.section_size}",
+                "",
+                "### Equipment and furnace programme",
+                "",
+                "- Furnace ID: to be completed",
+                "- Furnace programme ID: to be completed",
+                "- Furnace atmosphere, vacuum, or shielding gas: to be completed",
+                f"- Final cooling method: {context.cooling_condition}",
+                "",
+                "### Nominal thermal programme",
+                "",
+                "- Use the proposed validation recipe above as the nominal thermal programme.",
+                "",
+                "### Required process records",
+                "",
+                "- Record actual ramp rate, soak start time, soak end time, cooling condition, specimen placement, and thermocouple or witness coupon position.",
+                "",
+                "### Sign-off",
+                "",
+                "- Operator sign-off: to be completed",
+                "",
                 "## Expected static-property estimates",
             ]
         )
@@ -137,6 +169,38 @@ def build_printable_report_safely(
                 f"- Route: {row.get('ht_class', 'not available')}",
                 f"- Proposed validation recipe: {row.get('selected_recipe_summary', row.get('temperature_time_window', 'not specified'))}",
                 f"- Recommendation index: {float(row.get('ml_assisted_score', row.get('adjusted_score', 0.0))):.2f}",
+                "",
+                "## Technician heat-treatment instruction sheet",
+                "",
+                "- Instruction status: draft work instruction for technician review; verify against the local furnace standard operating procedure before processing.",
+                "- Do not begin heat treatment until the required blanks below are completed and the route is approved by the process owner.",
+                "",
+                "### Material and specimen identification",
+                "",
+                "- Specimen or batch ID: to be completed",
+                f"- Initial material state: {context.initial_material_state}",
+                f"- Build orientation: {context.build_orientation}",
+                f"- Surface condition: {context.surface_condition}",
+                f"- Representative section size: {context.section_size}",
+                "",
+                "### Equipment and furnace programme",
+                "",
+                "- Furnace ID: to be completed",
+                "- Furnace programme ID: to be completed",
+                "- Furnace atmosphere, vacuum, or shielding gas: to be completed",
+                f"- Final cooling method: {context.cooling_condition}",
+                "",
+                "### Nominal thermal programme",
+                "",
+                "- Use the proposed validation recipe above as the nominal thermal programme.",
+                "",
+                "### Required process records",
+                "",
+                "- Record actual ramp rate, soak start time, soak end time, cooling condition, specimen placement, and thermocouple or witness coupon position.",
+                "",
+                "### Sign-off",
+                "",
+                "- Operator sign-off: to be completed",
                 "",
                 "## Expected static-property estimates",
             ]
@@ -1026,14 +1090,85 @@ with tab1:
             )
             report_cols[3].metric("Recommendation index", f"{float(top_row['ml_assisted_score']):.2f}")
             st.write(str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", "No proposed recipe is available."))))
+            report_cycle_rows = build_thermal_cycle_rows(
+                str(top_row["ht_class"]),
+                str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", ""))),
+            )
+
+            st.markdown("#### Technician heat-treatment instruction sheet")
+            st.write(
+                "Instruction status: draft work instruction for technician review; verify against the local furnace standard operating procedure before processing. "
+                "Do not begin heat treatment until the required blanks below are completed and the route is approved by the process owner."
+            )
+            tech_cols = st.columns(2)
+            with tech_cols[0]:
+                st.markdown("##### Material and specimen identification")
+                st.dataframe(
+                    pd.DataFrame(
+                        [
+                            {"field": "Specimen or batch ID", "value": "to be completed"},
+                            {"field": "Alloy and process", "value": "LPBF Inconel 718"},
+                            {"field": "Initial material state", "value": str(initial_state)},
+                            {"field": "Build orientation", "value": str(build_orientation)},
+                            {"field": "Surface condition", "value": str(surface_condition)},
+                            {"field": "Representative section size", "value": str(section_size)},
+                            {"field": "Number of specimens", "value": "to be completed"},
+                            {"field": "Drawing or coupon geometry reference", "value": "to be completed"},
+                        ]
+                    ),
+                    width="stretch",
+                    hide_index=True,
+                )
+            with tech_cols[1]:
+                st.markdown("##### Equipment and furnace programme")
+                st.dataframe(
+                    pd.DataFrame(
+                        [
+                            {"field": "Furnace ID", "value": "to be completed"},
+                            {"field": "Furnace programme ID", "value": "to be completed"},
+                            {"field": "Maximum permitted furnace temperature", "value": f"{int(furnace_limit_C)} C"},
+                            {"field": "Maximum practical cycle time", "value": f"{float(maximum_cycle_hours):.1f} h"},
+                            {"field": "Planning ramp rate", "value": "10 C/min for dashboard occupancy estimate; record actual ramp"},
+                            {"field": "Furnace atmosphere, vacuum, or shielding gas", "value": "to be completed"},
+                            {"field": "Thermocouple or witness coupon location", "value": "to be completed"},
+                            {"field": "Final cooling method", "value": str(cooling_condition)},
+                        ]
+                    ),
+                    width="stretch",
+                    hide_index=True,
+                )
+            st.markdown("##### Nominal thermal programme")
+            if report_cycle_rows.empty:
+                st.info("Nominal thermal programme could not be parsed automatically; complete the furnace programme manually before processing.")
+            else:
+                cycle_reset = report_cycle_rows.reset_index(drop=True)
+                hold_steps = []
+                for idx, item in cycle_reset[cycle_reset["stage"].astype(str).str.startswith("hold")].iterrows():
+                    previous_elapsed = float(cycle_reset.iloc[idx - 1]["elapsed_h"]) if idx > 0 else 0.0
+                    hold_steps.append(
+                        {
+                            "Step": len(hold_steps) + 1,
+                            "Action": "Hold at temperature",
+                            "Set point": f"{int(item['temperature_C'])} C",
+                            "Hold time": f"{float(item['elapsed_h']) - previous_elapsed:g} h",
+                            "Cooling or transfer note": "Proceed directly to the next specified step unless the local furnace procedure requires an intermediate cool.",
+                        }
+                    )
+                st.dataframe(pd.DataFrame(hold_steps), width="stretch", hide_index=True)
+            st.markdown("##### Required process records")
+            st.markdown(
+                """
+                - Confirm furnace calibration is in date before loading.
+                - Record actual ramp rate, soak start time, soak end time, and actual cooling condition.
+                - Record specimen placement, fixture or tray arrangement, and thermocouple or witness coupon position.
+                - Record any deviation from the programme before using the specimens for property claims.
+                - Operator sign-off: to be completed.
+                """
+            )
 
             plot_col_1, plot_col_2 = st.columns(2)
             with plot_col_1:
                 st.markdown("#### Heat-treatment profile plot")
-                report_cycle_rows = build_thermal_cycle_rows(
-                    str(top_row["ht_class"]),
-                    str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", ""))),
-                )
                 if report_cycle_rows.empty:
                     st.info("Thermal-cycle profile is unavailable for the selected route.")
                 else:
