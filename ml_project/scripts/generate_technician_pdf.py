@@ -123,7 +123,6 @@ def draw_thermal_profile(route: str, recipe: str, width: float = 170 * mm, heigh
         if temp <= max_temp:
             y = y_pos(temp)
             drawing.add(Line(left - 3, y, left + plot_w, y, strokeColor=colors.HexColor("#e5e7eb"), strokeWidth=0.3))
-            drawing.add(String(left - 24, y - 3, str(temp), fontSize=6.5, fillColor=colors.HexColor("#4b5563")))
     for hour in [0, 5, 10, 15, 20]:
         if hour <= max_time:
             x = x_pos(hour)
