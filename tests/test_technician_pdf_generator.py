@@ -29,12 +29,15 @@ def _drawing_strings(item):
         yield from _drawing_strings(child)
 
 
-def test_pdf_thermal_profile_does_not_print_temperature_values_on_gridlines():
+def test_pdf_thermal_profile_prints_temperature_values_on_hold_segments_only():
     drawing = draw_thermal_profile("ST_DA", "980 C for 1 h; 720 C for 8 h; 620 C for 8 h")
     labels = list(_drawing_strings(drawing))
 
     assert "Time, t (h)" in labels
     assert "Thermal step profile: temperature T (C)" in labels
+    assert "980 C" in labels
+    assert "720 C" in labels
+    assert "620 C" in labels
     assert "250" not in labels
     assert "500" not in labels
     assert "750" not in labels

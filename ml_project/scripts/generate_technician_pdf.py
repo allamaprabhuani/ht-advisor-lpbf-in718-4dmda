@@ -140,6 +140,12 @@ def draw_thermal_profile(route: str, recipe: str, width: float = 170 * mm, heigh
         drawing.add(Line(x1, y1, x2, y2, strokeColor=color, strokeWidth=1.8))
         drawing.add(Circle(x1, y1, 1.5, fillColor=color, strokeColor=color))
         drawing.add(Circle(x2, y2, 1.5, fillColor=color, strokeColor=color))
+        if str(points.iloc[0]["segment_type"]) == "hold" and abs(y2 - y1) < 0.01:
+            temperature_label = f"{float(points.iloc[1]['temperature_C']):.0f} C"
+            label_x = (x1 + x2) / 2 - 9
+            label_y = y1 + 4
+            drawing.add(Rect(label_x - 2, label_y - 2, 25, 9, fillColor=colors.white, strokeColor=colors.white))
+            drawing.add(String(label_x, label_y, temperature_label, fontSize=6.8, fillColor=color))
         if label not in legend_labels:
             legend_labels.append(label)
 
