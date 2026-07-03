@@ -19,6 +19,7 @@ from ml_project.ht_advisor.dashboard_data import (
     build_property_tradeoff_rows,
     build_recommendation_contribution_rows,
     build_route_radar_rows,
+    build_thermal_cycle_segment_rows,
     build_thermal_cycle_rows,
 )
 from ml_project.ht_advisor.expert_system import (
@@ -459,6 +460,23 @@ FEASIBILITY_COLORS = {
     "feasible under selected constraints": "#2f5d62",
     "conditional under selected constraints": "#8a6f3d",
     "limited by selected furnace range": "#a44a3f",
+}
+THERMAL_STEP_COLORS = {
+    "Ramp to HIP": "#3b5b8a",
+    "HIP hold": "#7f3b08",
+    "Ramp to homogenisation": "#5f6f52",
+    "Transition to homogenisation": "#5f6f52",
+    "Homogenisation hold": "#8a6f3d",
+    "Ramp to solution treatment": "#2f5d62",
+    "Transition to solution treatment": "#2f5d62",
+    "Solution treatment hold": "#1f7a63",
+    "Transition to first ageing": "#5b7f95",
+    "First ageing hold": "#a6761d",
+    "Transition to second ageing": "#6b7280",
+    "Second ageing hold": "#a44a3f",
+    "Transition to ageing": "#5b7f95",
+    "Ageing hold": "#a6761d",
+    "Final cooling": "#374151",
 }
 FATIGUE_SCHEDULE_COLUMN_CONFIG = {
     "stress_amplitude_MPa": st.column_config.NumberColumn("Stress amplitude, sigma_a (MPa)"),
@@ -1140,6 +1158,10 @@ with tab1:
                 str(top_row["ht_class"]),
                 str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", ""))),
             )
+            report_cycle_segment_rows = build_thermal_cycle_segment_rows(
+                str(top_row["ht_class"]),
+                str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", ""))),
+            )
 
             st.markdown("#### Technician heat-treatment instruction sheet")
             st.write(
@@ -1232,20 +1254,21 @@ with tab1:
             plot_col_1, plot_col_2 = st.columns(2)
             with plot_col_1:
                 st.markdown("#### Heat-treatment profile plot")
-                if report_cycle_rows.empty:
+                if report_cycle_segment_rows.empty:
                     st.info("Thermal-cycle profile is unavailable for the selected route.")
                 else:
                     report_cycle_fig = px.line(
-                        report_cycle_rows,
+                        report_cycle_segment_rows,
                         x="elapsed_h",
                         y="temperature_C",
                         markers=True,
-                        color="stage",
-                        color_discrete_sequence=ACADEMIC_COLORS,
-                        labels={"elapsed_h": "Time, t (h)", "temperature_C": "Temperature, T (C)", "stage": "Thermal stage"},
+                        color="segment_label",
+                        line_group="segment_id",
+                        color_discrete_map=THERMAL_STEP_COLORS,
+                        labels={"elapsed_h": "Time, t (h)", "temperature_C": "Temperature, T (C)", "segment_label": "Thermal step"},
                     )
                     report_cycle_fig.update_traces(
-                        hovertemplate="Stage: %{fullData.name}<br>Time: %{x:.2f} h<br>Temperature: %{y:.0f} C<extra></extra>"
+                        hovertemplate="Thermal step: %{fullData.name}<br>Time: %{x:.2f} h<br>Temperature: %{y:.0f} C<extra></extra>"
                     )
                     st.plotly_chart(academic_layout(report_cycle_fig, "Nominal recommended thermal cycle", height=390), width="stretch")
                     st.caption("Nominal profile shown; actual thermal history depends on furnace thermal mass, part geometry, and thermocouple placement.")
@@ -1438,28 +1461,29 @@ with tab1:
             with v1:
                 st.markdown("#### Recommended-route thermal cycle")
                 cycle_source = str(top_row.get("selected_recipe_summary", top_row["temperature_time_window"])) if top_row is not None else ""
-                cycle_rows = build_thermal_cycle_rows(str(top_row["ht_class"]), cycle_source) if top_row is not None else pd.DataFrame()
-                if cycle_rows.empty:
+                cycle_segment_rows = build_thermal_cycle_segment_rows(str(top_row["ht_class"]), cycle_source) if top_row is not None else pd.DataFrame()
+                if cycle_segment_rows.empty:
                     st.info("Thermal-cycle profile is unavailable for the selected route.")
                 else:
                     cycle_fig = px.line(
-                        cycle_rows,
+                        cycle_segment_rows,
                         x="elapsed_h",
                         y="temperature_C",
                         markers=True,
-                        color="ht_class",
-                        color_discrete_sequence=[ACADEMIC_COLORS[0]],
-                        labels={"elapsed_h": "Elapsed time (h)", "temperature_C": "Temperature (C)", "ht_class": "Route"},
+                        color="segment_label",
+                        line_group="segment_id",
+                        color_discrete_map=THERMAL_STEP_COLORS,
+                        labels={"elapsed_h": "Elapsed time (h)", "temperature_C": "Temperature (C)", "segment_label": "Thermal step"},
                     )
                     cycle_fig.update_traces(
                         hovertemplate=(
                             "Route: %{customdata[0]}<br>"
-                            "Stage: %{customdata[1]}<br>"
+                            "Thermal step: %{customdata[1]}<br>"
                             "Elapsed time: %{x:.2f} h<br>"
                             "Temperature: %{y:.0f} C<br>"
                             "<extra></extra>"
                         ),
-                        customdata=cycle_rows[["ht_class", "stage"]],
+                        customdata=cycle_segment_rows[["ht_class", "segment_label"]],
                     )
                     st.plotly_chart(academic_layout(cycle_fig, "Time-temperature profile for the top-ranked route", height=420), width="stretch")
             with v2:

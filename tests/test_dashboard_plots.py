@@ -1,5 +1,6 @@
 import pandas as pd
 
+import ml_project.ht_advisor.dashboard_data as dashboard_data
 from ml_project.ht_advisor.dashboard_data import build_property_tradeoff_rows, parse_process_window
 from ml_project.ht_advisor.dashboard_data import (
     build_recommendation_contribution_rows,
@@ -40,6 +41,23 @@ def test_build_thermal_cycle_rows_creates_ordered_time_temperature_profile():
     assert rows["temperature_C"].max() == 1095
     assert rows["temperature_C"].iloc[0] == 25
     assert rows["temperature_C"].iloc[-1] == 25
+
+
+def test_build_thermal_cycle_segment_rows_labels_process_steps_for_colored_plotting():
+    rows = dashboard_data.build_thermal_cycle_segment_rows("ST_DA", "980 C for 1 h; 720 C for 8 h; 620 C for 8 h")
+
+    assert not rows.empty
+    assert {"segment_id", "segment_label", "segment_type", "elapsed_h", "temperature_C", "ht_class"}.issubset(rows.columns)
+    assert rows.groupby("segment_id").size().eq(2).all()
+    assert rows["segment_label"].drop_duplicates().tolist() == [
+        "Ramp to solution treatment",
+        "Solution treatment hold",
+        "Transition to first ageing",
+        "First ageing hold",
+        "Transition to second ageing",
+        "Second ageing hold",
+        "Final cooling",
+    ]
 
 
 def test_build_route_radar_rows_normalises_property_and_evidence_axes():

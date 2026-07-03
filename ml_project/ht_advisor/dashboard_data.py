@@ -73,6 +73,80 @@ def build_thermal_cycle_rows(ht_class: str, window: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _thermal_hold_label(ht_class: str, step_index: int, temperature_C: float) -> str:
+    route = (ht_class or "").upper()
+    if "HIP" in route and temperature_C >= 1050:
+        return "HIP hold"
+    if "HA" in route and step_index == 1 and temperature_C >= 1000:
+        return "Homogenisation hold"
+    if "ST" in route and temperature_C >= 900:
+        return "Solution treatment hold"
+    if "DA" in route and temperature_C < 900:
+        return "First ageing hold" if temperature_C >= 650 else "Second ageing hold"
+    if "AGE" in route or "DA" in route:
+        return "Ageing hold"
+    return f"Hold at {temperature_C:.0f} C"
+
+
+def _thermal_segment_label(ht_class: str, stage: str, temperature_C: float, prior_temperature_C: float) -> tuple[str, str]:
+    if stage == "cool":
+        return "Final cooling", "cooling"
+
+    stage_match = re.search(r"(\d+)$", stage or "")
+    step_index = int(stage_match.group(1)) if stage_match else 1
+    stage_type = "hold" if (stage or "").startswith("hold") else "ramp"
+    hold_label = _thermal_hold_label(ht_class, step_index, temperature_C)
+    if stage_type == "hold":
+        return hold_label, "hold"
+
+    if hold_label == "HIP hold":
+        label = "Ramp to HIP"
+    elif hold_label == "Homogenisation hold":
+        label = "Ramp to homogenisation" if prior_temperature_C <= 25 else "Transition to homogenisation"
+    elif hold_label == "Solution treatment hold":
+        label = "Ramp to solution treatment" if prior_temperature_C <= 25 else "Transition to solution treatment"
+    elif hold_label == "First ageing hold":
+        label = "Transition to first ageing"
+    elif hold_label == "Second ageing hold":
+        label = "Transition to second ageing"
+    elif hold_label == "Ageing hold":
+        label = "Transition to ageing"
+    else:
+        label = f"Ramp to {temperature_C:.0f} C"
+    return label, "ramp"
+
+
+def build_thermal_cycle_segment_rows(ht_class: str, window: str) -> pd.DataFrame:
+    cycle_rows = build_thermal_cycle_rows(ht_class, window)
+    columns = ["ht_class", "elapsed_h", "temperature_C", "stage", "segment_id", "segment_label", "segment_type"]
+    if cycle_rows.empty or len(cycle_rows) < 2:
+        return pd.DataFrame(columns=columns)
+
+    segment_rows: list[dict[str, object]] = []
+    for segment_id, row_idx in enumerate(range(1, len(cycle_rows)), start=1):
+        prior = cycle_rows.iloc[row_idx - 1]
+        current = cycle_rows.iloc[row_idx]
+        label, segment_type = _thermal_segment_label(
+            ht_class=str(current["ht_class"]),
+            stage=str(current["stage"]),
+            temperature_C=float(current["temperature_C"]),
+            prior_temperature_C=float(prior["temperature_C"]),
+        )
+        for point in (prior, current):
+            segment_rows.append(
+                {
+                    "ht_class": str(point["ht_class"]),
+                    "elapsed_h": float(point["elapsed_h"]),
+                    "temperature_C": float(point["temperature_C"]),
+                    "stage": str(point["stage"]),
+                    "segment_id": segment_id,
+                    "segment_label": label,
+                    "segment_type": segment_type,
+                }
+            )
+    return pd.DataFrame(segment_rows, columns=columns)
+
+
 def _normalise_to_100(series: pd.Series) -> pd.Series:
     numeric = pd.to_numeric(series, errors="coerce")
     if numeric.notna().sum() == 0:
