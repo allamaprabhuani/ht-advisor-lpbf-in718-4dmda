@@ -1201,6 +1201,41 @@ with tab1:
                         }
                     )
                 st.dataframe(pd.DataFrame(hold_steps), width="stretch", hide_index=True)
+            st.markdown("##### Stage interpretation through the profile")
+            if str(top_row["ht_class"]) == "ST_DA":
+                st.write(
+                    "The full route is ST_DA: solution treatment is completed first, followed by the two ageing holds that make up double ageing."
+                )
+                st.dataframe(
+                    pd.DataFrame(
+                        [
+                            {
+                                "Profile region": "Solution treatment",
+                                "When it occurs": "Ramp to 980 C, then hold 980 C for 1 h",
+                                "Purpose in this route": "Sets the solution-treated condition before ageing; intended to reduce as-built heat-treatment sensitivity before precipitation ageing.",
+                            },
+                            {
+                                "Profile region": "Double ageing - first hold",
+                                "When it occurs": "After solution treatment, hold 720 C for 8 h",
+                                "Purpose in this route": "First ageing hold for precipitation strengthening.",
+                            },
+                            {
+                                "Profile region": "Double ageing - second hold",
+                                "When it occurs": "Then hold 620 C for 8 h",
+                                "Purpose in this route": "Second ageing hold completing the double-ageing sequence.",
+                            },
+                            {
+                                "Profile region": "Final cooling",
+                                "When it occurs": "After the 620 C hold",
+                                "Purpose in this route": "Use controlled furnace cooling unless the process owner approves a different cooling condition.",
+                            },
+                        ]
+                    ),
+                    width="stretch",
+                    hide_index=True,
+                )
+            else:
+                st.write("Stage interpretation should be reviewed against the selected route and local furnace procedure before processing.")
             st.markdown("##### Required process records")
             st.markdown(
                 """

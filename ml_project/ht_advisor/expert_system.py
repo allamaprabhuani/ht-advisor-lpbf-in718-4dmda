@@ -431,6 +431,29 @@ def _recipe_steps(recipe: str) -> list[dict[str, object]]:
     return steps
 
 
+def _stage_interpretation_lines(route: str) -> list[str]:
+    if route == "ST_DA":
+        return [
+            "",
+            "### Stage interpretation through the profile",
+            "",
+            "The full route is ST_DA: solution treatment is completed first, followed by the two ageing holds that make up double ageing.",
+            "",
+            "| Profile region | When it occurs | Purpose in this route |",
+            "| --- | --- | --- |",
+            "| Solution treatment | Ramp to 980 C, then hold 980 C for 1 h | Sets the solution-treated condition before ageing; intended to reduce as-built heat-treatment sensitivity before precipitation ageing. |",
+            "| Double ageing - first hold | After solution treatment, hold 720 C for 8 h | First ageing hold for precipitation strengthening. |",
+            "| Double ageing - second hold | Then hold 620 C for 8 h | Second ageing hold completing the double-ageing sequence. |",
+            "| Final cooling | After the 620 C hold | Use controlled furnace cooling unless the process owner approves a different cooling condition. |",
+        ]
+    return [
+        "",
+        "### Stage interpretation through the profile",
+        "",
+        "The stage interpretation should be reviewed against the selected route and local furnace procedure before processing.",
+    ]
+
+
 def _technician_instruction_lines(
     input_conditions: dict[str, object],
     row: dict[str, object],
@@ -485,6 +508,7 @@ def _technician_instruction_lines(
             )
     else:
         lines.append("| 1 | Thermal cycle | to be completed | to be completed | Recipe could not be parsed automatically. |")
+    lines.extend(_stage_interpretation_lines(route))
     lines.extend(
         [
             f"- Final cooling method: {_report_value(context.cooling_condition)}",
