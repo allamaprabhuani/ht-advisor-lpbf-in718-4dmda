@@ -311,6 +311,7 @@ st.markdown(
     .stApp {
         background: #f8f8f5;
         color: var(--academic-ink);
+        font-size: 0.94rem;
     }
     [data-testid="stHeader"] {
         background: #f8f8f5;
@@ -331,13 +332,31 @@ st.markdown(
     h1 {
         border-bottom: 3px solid var(--academic-accent);
         padding-bottom: 0.35rem;
+        font-size: 1.85rem;
+    }
+    h2 {
+        font-size: 1.35rem;
+    }
+    h3 {
+        font-size: 1.12rem;
+    }
+    div[data-testid="stCaptionContainer"],
+    div[data-testid="stMarkdownContainer"] p,
+    div[data-testid="stDataFrame"] {
+        font-size: 0.9rem;
     }
     div[data-testid="stMetric"] {
         background: var(--academic-panel);
         border: 1px solid var(--academic-border);
         border-radius: 4px;
-        padding: 0.65rem 0.75rem;
+        padding: 0.55rem 0.65rem;
         box-shadow: 0 1px 2px rgba(23, 33, 43, 0.05);
+    }
+    div[data-testid="stMetricValue"] {
+        font-size: 1.25rem;
+    }
+    div[data-testid="stMetricLabel"] {
+        font-size: 0.78rem;
     }
     div[data-testid="stInfo"] {
         background: var(--academic-accent-soft);
@@ -539,9 +558,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.title("HT-Advisor: Evidence-Guided Heat-Treatment Selection for LPBF Inconel 718")
+st.title("HT-Advisor for LPBF Inconel 718")
 st.caption(
-    "A source-traceable decision-support system for ranking heat-treatment routes under local processing constraints. "
+    "Evidence-guided heat-treatment selection under local processing constraints. "
     "Recommendations indicate literature-supported experimental candidates and require validation on local specimens."
 )
 
@@ -617,6 +636,13 @@ sn_model_card = load_text(sn_model_card_path, file_fingerprint(sn_model_card_pat
 supporting_literature = build_supporting_literature_table()
 
 ACADEMIC_COLORS = ["#2f5d62", "#5b7f95", "#8a6f3d", "#6b7280", "#a44a3f", "#7d8f69"]
+PLOTLY_STATIC_CONFIG = {
+    "staticPlot": True,
+    "displayModeBar": False,
+    "scrollZoom": False,
+    "doubleClick": False,
+    "responsive": True,
+}
 FEASIBILITY_COLORS = {
     "feasible under selected constraints": "#2f5d62",
     "conditional under selected constraints": "#8a6f3d",
@@ -1086,27 +1112,6 @@ with st.sidebar:
         index=3,
         help=INPUT_HELP["furnace_limit"],
     )
-    build_orientation = st.selectbox(
-        "Build orientation",
-        ["vertical", "horizontal", "mixed", "not specified"],
-        help=INPUT_HELP["build_orientation"],
-    )
-    initial_state = st.selectbox(
-        "Initial material state",
-        ["EOS-like LPBF, as-built", "EOS-like LPBF, stress relieved", "EOS-like LPBF, machined"],
-        help=INPUT_HELP["initial_state"],
-    )
-    section_size = st.selectbox(
-        "Representative section size",
-        ["thin section", "moderate section", "large thermal mass", "not specified"],
-        index=3,
-        help=INPUT_HELP["section_size"],
-    )
-    surface_condition = st.selectbox(
-        "Surface condition",
-        ["machined", "polished", "as-built", "not specified"],
-        help=INPUT_HELP["surface_condition"],
-    )
 
     st.markdown("#### Manual experimental inputs")
     furnace_defaults = {"up to 980 C": 980, "up to 1065 C": 1065, "up to 1100 C": 1100, "not specified": 1250 if allow_hip else 1100}
@@ -1145,42 +1150,65 @@ with st.sidebar:
         format="%.2f",
         help=INPUT_HELP["stress_ratio_R"],
     )
-    cooling_condition = st.selectbox(
-        "Cooling condition available",
-        ["controlled furnace cooling", "air cooling", "water quench", "not specified"],
-        help=INPUT_HELP["cooling_condition"],
-    )
-    chemistry_record = st.toggle(
-        "Record nominal chemistry inputs",
-        value=False,
-        help=INPUT_HELP["chemistry_record"],
-    )
+
     niobium = aluminium = titanium = None
-    if chemistry_record:
-        niobium = st.number_input(
-            "Nb + Ta (wt.%)",
-            min_value=0.0,
-            max_value=8.0,
-            value=5.1,
-            step=0.1,
-            help=INPUT_HELP["niobium"],
+    with st.expander("Advanced inputs", expanded=False):
+        initial_state = st.selectbox(
+            "Initial material state",
+            ["EOS-like LPBF, as-built", "EOS-like LPBF, stress relieved", "EOS-like LPBF, machined"],
+            help=INPUT_HELP["initial_state"],
         )
-        aluminium = st.number_input(
-            "Al (wt.%)",
-            min_value=0.0,
-            max_value=2.0,
-            value=0.5,
-            step=0.05,
-            help=INPUT_HELP["aluminium"],
+        build_orientation = st.selectbox(
+            "Build orientation",
+            ["vertical", "horizontal", "mixed", "not specified"],
+            help=INPUT_HELP["build_orientation"],
         )
-        titanium = st.number_input(
-            "Ti (wt.%)",
-            min_value=0.0,
-            max_value=2.0,
-            value=1.0,
-            step=0.05,
-            help=INPUT_HELP["titanium"],
+        section_size = st.selectbox(
+            "Representative section size",
+            ["thin section", "moderate section", "large thermal mass", "not specified"],
+            index=3,
+            help=INPUT_HELP["section_size"],
         )
+        surface_condition = st.selectbox(
+            "Surface condition",
+            ["machined", "polished", "as-built", "not specified"],
+            help=INPUT_HELP["surface_condition"],
+        )
+        cooling_condition = st.selectbox(
+            "Cooling condition available",
+            ["controlled furnace cooling", "air cooling", "water quench", "not specified"],
+            help=INPUT_HELP["cooling_condition"],
+        )
+        chemistry_record = st.toggle(
+            "Record nominal chemistry inputs",
+            value=False,
+            help=INPUT_HELP["chemistry_record"],
+        )
+        if chemistry_record:
+            niobium = st.number_input(
+                "Nb + Ta (wt.%)",
+                min_value=0.0,
+                max_value=8.0,
+                value=5.1,
+                step=0.1,
+                help=INPUT_HELP["niobium"],
+            )
+            aluminium = st.number_input(
+                "Al (wt.%)",
+                min_value=0.0,
+                max_value=2.0,
+                value=0.5,
+                step=0.05,
+                help=INPUT_HELP["aluminium"],
+            )
+            titanium = st.number_input(
+                "Ti (wt.%)",
+                min_value=0.0,
+                max_value=2.0,
+                value=1.0,
+                step=0.05,
+                help=INPUT_HELP["titanium"],
+            )
 
     with st.expander("Current input context", expanded=False):
         st.write(
@@ -1350,33 +1378,34 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-st.markdown(
-    f"""
-    <section class="evidence-workflow" aria-label="Evidence workflow visual">
-      <div class="workflow-caption">Evidence workflow visual</div>
-      <div class="workflow-grid">
-        <div class="workflow-step"><strong>Literature corpus</strong><span>Curated articles, spreadsheets, and local source-file hashes.</span><span class="workflow-count">{len(sources)} sources</span></div>
-        <div class="workflow-step"><strong>AM-only audit</strong><span>Records screened for additive-manufactured Inconel 718 relevance.</span><span class="workflow-count">{am_scope_rows} scope rows</span></div>
-        <div class="workflow-step"><strong>Route evidence</strong><span>Heat-treatment classes linked to source rows and feasibility logic.</span><span class="workflow-count">{workflow_route_rows} evidence rows</span></div>
-        <div class="workflow-step"><strong>S-N screening</strong><span>Reviewed fatigue markers retained for right-censored Basquin screening.</span><span class="workflow-count">{reviewed_sn_points} points; {trained_sn_curves} curves</span></div>
-        <div class="workflow-step"><strong>Technician validation</strong><span>Recommendation translated into a draft processing and test sheet.</span><span class="workflow-count">{technician_status}</span></div>
-      </div>
-    </section>
-    """,
-    unsafe_allow_html=True,
-)
+with st.expander("Evidence workflow summary", expanded=False):
+    st.markdown(
+        f"""
+        <section class="evidence-workflow" aria-label="Evidence workflow visual">
+          <div class="workflow-caption">Evidence workflow visual</div>
+          <div class="workflow-grid">
+            <div class="workflow-step"><strong>Literature corpus</strong><span>Curated articles, spreadsheets, and local source-file hashes.</span><span class="workflow-count">{len(sources)} sources</span></div>
+            <div class="workflow-step"><strong>AM-only audit</strong><span>Records screened for additive-manufactured Inconel 718 relevance.</span><span class="workflow-count">{am_scope_rows} scope rows</span></div>
+            <div class="workflow-step"><strong>Route evidence</strong><span>Heat-treatment classes linked to source rows and feasibility logic.</span><span class="workflow-count">{workflow_route_rows} evidence rows</span></div>
+            <div class="workflow-step"><strong>S-N screening</strong><span>Reviewed fatigue markers retained for right-censored Basquin screening.</span><span class="workflow-count">{reviewed_sn_points} points; {trained_sn_curves} curves</span></div>
+            <div class="workflow-step"><strong>Technician validation</strong><span>Recommendation translated into a draft processing and test sheet.</span><span class="workflow-count">{technician_status}</span></div>
+          </div>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
 
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-    "Decision Dossier",
-    "Evidence Base",
-    "Process Window",
-    "Property Assessment",
-    "Validation Plan",
-    "Help and Scientific Basis",
+tab1, tab4, tab3, tab2 = st.tabs([
+    "Recommended Thermal Protocol",
+    "Mechanical Response",
+    "Process Window & Validation",
+    "Evidence & Scientific Basis",
 ])
+tab5 = tab3
+tab6 = tab2
 
 with tab1:
-    st.subheader("Decision Support Dossier")
+    st.subheader("Recommended Thermal Protocol")
     if top_row is not None:
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Recommended route", str(top_row["ht_class"]), help="The highest-ranked heat treatment route based on the selected objective and constraints.")
@@ -1445,75 +1474,77 @@ with tab1:
                         borderwidth=1,
                     )
                 route_cycle_fig.update_layout(legend=dict(orientation="h", yanchor="top", y=-0.22, xanchor="left", x=0))
-                st.plotly_chart(academic_layout(route_cycle_fig, "Thermal-cycle thumbnail", height=360), width="stretch")
+                st.plotly_chart(academic_layout(route_cycle_fig, "Thermal-cycle thumbnail", height=360), width="stretch", config=PLOTLY_STATIC_CONFIG)
         with visual_cols[1]:
             st.markdown("##### S-N screening thumbnail")
             if sn_model_available:
                 sn_thumb = build_sn_thumbnail_figure(sn_model_prediction_grid, sn_points)
-                st.plotly_chart(sn_thumb, width="stretch")
+                st.plotly_chart(sn_thumb, width="stretch", config=PLOTLY_STATIC_CONFIG)
                 st.caption("Reviewed literature marker points and source-specific fitted curves; not a local design allowable.")
             else:
                 st.info("S-N screening artifacts are unavailable in this run.")
-        st.markdown("##### Evidence support by role")
-        if route_evidence.empty:
-            st.info("Route-evidence rows are unavailable in this run.")
-        else:
-            route_evidence_subset = route_evidence[route_evidence["ht_class"].astype(str) == str(top_row["ht_class"])]
-            if route_evidence_subset.empty:
-                route_evidence_subset = route_evidence
-            evidence_role_counts = (
-                route_evidence_subset["evidence_role"].fillna("not specified").value_counts().reset_index()
-            )
-            evidence_role_counts.columns = ["evidence_role", "count"]
-            evidence_fig = px.bar(
-                evidence_role_counts,
-                x="count",
-                y="evidence_role",
-                orientation="h",
-                color_discrete_sequence=["#2f5d62"],
-                labels={"count": "Rows", "evidence_role": "Evidence role"},
-            )
-            evidence_fig.update_traces(
-                hovertemplate="Evidence role: %{y}<br>Rows: %{x}<extra></extra>"
-            )
-            st.plotly_chart(academic_layout(evidence_fig, "Route evidence roles", height=260), width="stretch")
-        st.markdown("#### Fatigue validation stress schedule")
-        st.caption(
-            "These stress levels are proposed for experimental validation at the selected stress ratio. "
-            "The table does not report predicted fatigue life."
-        )
-        st.dataframe(fatigue_schedule, width="stretch", column_config=FATIGUE_SCHEDULE_COLUMN_CONFIG)
-        if not stress_ratio_screening.empty:
-            route_screening = stress_ratio_screening[
-                stress_ratio_screening["heat_treatment_class"].astype(str).eq(str(top_row["ht_class"]))
-            ]
-            if route_screening.empty:
-                route_screening = stress_ratio_screening
-            selected_ratio_screening = route_screening[
-                route_screening["screening_stress_ratio_R"].astype(float).round(3).eq(round(float(stress_ratio_R), 3))
-            ]
-            if not selected_ratio_screening.empty:
-                st.markdown("#### Stress-ratio translated screening table")
-                st.caption(
-                    "Goodman mean-stress translation converts reviewed R = -1 S-N evidence into an equivalent fully reversed comparison. "
-                    f"The current table uses UTS = {uts_for_goodman:.0f} MPa. It is screening guidance, not a trained stress-ratio-specific fatigue-life predictor."
+        with st.expander("Evidence support by role", expanded=False):
+            st.markdown("##### Evidence support by role")
+            if route_evidence.empty:
+                st.info("Route-evidence rows are unavailable in this run.")
+            else:
+                route_evidence_subset = route_evidence[route_evidence["ht_class"].astype(str) == str(top_row["ht_class"])]
+                if route_evidence_subset.empty:
+                    route_evidence_subset = route_evidence
+                evidence_role_counts = (
+                    route_evidence_subset["evidence_role"].fillna("not specified").value_counts().reset_index()
                 )
-                st.dataframe(
-                    selected_ratio_screening[
-                        [
-                            "condition_id",
-                            "target_cycles",
-                            "screening_stress_ratio_R",
-                            "screening_stress_amplitude_MPa",
-                            "sigma_max_MPa",
-                            "sigma_min_MPa",
-                            "goodman_equivalent_R_minus_1_MPa",
-                            "screening_boundary",
-                        ]
-                    ],
-                    width="stretch",
-                    hide_index=True,
+                evidence_role_counts.columns = ["evidence_role", "count"]
+                evidence_fig = px.bar(
+                    evidence_role_counts,
+                    x="count",
+                    y="evidence_role",
+                    orientation="h",
+                    color_discrete_sequence=["#2f5d62"],
+                    labels={"count": "Rows", "evidence_role": "Evidence role"},
                 )
+                evidence_fig.update_traces(
+                    hovertemplate="Evidence role: %{y}<br>Rows: %{x}<extra></extra>"
+                )
+                st.plotly_chart(academic_layout(evidence_fig, "Route evidence roles", height=260), width="stretch", config=PLOTLY_STATIC_CONFIG)
+        with st.expander("Fatigue validation schedule", expanded=False):
+            st.markdown("#### Fatigue validation stress schedule")
+            st.caption(
+                "These stress levels are proposed for experimental validation at the selected stress ratio. "
+                "The table does not report predicted fatigue life."
+            )
+            st.dataframe(fatigue_schedule, width="stretch", column_config=FATIGUE_SCHEDULE_COLUMN_CONFIG)
+            if not stress_ratio_screening.empty:
+                route_screening = stress_ratio_screening[
+                    stress_ratio_screening["heat_treatment_class"].astype(str).eq(str(top_row["ht_class"]))
+                ]
+                if route_screening.empty:
+                    route_screening = stress_ratio_screening
+                selected_ratio_screening = route_screening[
+                    route_screening["screening_stress_ratio_R"].astype(float).round(3).eq(round(float(stress_ratio_R), 3))
+                ]
+                if not selected_ratio_screening.empty:
+                    st.markdown("#### Stress-ratio translated screening table")
+                    st.caption(
+                        "Goodman mean-stress translation converts reviewed R = -1 S-N evidence into an equivalent fully reversed comparison. "
+                        f"The current table uses UTS = {uts_for_goodman:.0f} MPa. It is screening guidance, not a trained stress-ratio-specific fatigue-life predictor."
+                    )
+                    st.dataframe(
+                        selected_ratio_screening[
+                            [
+                                "condition_id",
+                                "target_cycles",
+                                "screening_stress_ratio_R",
+                                "screening_stress_amplitude_MPa",
+                                "sigma_max_MPa",
+                                "sigma_min_MPa",
+                                "goodman_equivalent_R_minus_1_MPa",
+                                "screening_boundary",
+                            ]
+                        ],
+                        width="stretch",
+                        hide_index=True,
+                    )
         st.markdown("#### Text recommendation")
         st.info(generate_text_recommendation(top_row, manual_context))
         st.caption(
@@ -1580,228 +1611,229 @@ with tab1:
         st.caption(
             "Use the print button for the visible report, or download the Markdown files for review, completion, and local document control."
         )
-        with st.container(border=True):
-            st.markdown("<div class='print-report'>", unsafe_allow_html=True)
-            st.markdown("### Process & Material Specifications")
-            st.markdown("#### Full input conditions")
-            st.dataframe(pd.DataFrame([{"condition": key, "value": str(value)} for key, value in input_conditions.items()]), width="stretch", hide_index=True)
-            st.markdown("#### Recommended heat-treatment route")
-            report_cols = st.columns(4)
-            report_cols[0].metric("Route", str(top_row["ht_class"]))
-            report_cols[1].metric(
-                "Peak temperature",
-                f"{int(top_row['recommended_peak_temperature_C'])} C" if pd.notna(top_row.get("recommended_peak_temperature_C")) else "not specified",
-            )
-            report_cols[2].metric(
-                "Total hold time",
-                f"{float(top_row['recommended_total_hold_h']):.1f} h" if pd.notna(top_row.get("recommended_total_hold_h")) else "not specified",
-            )
-            report_cols[3].metric("Recommendation index", f"{float(top_row['ml_assisted_score']):.2f}")
-            st.write(str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", "No proposed recipe is available."))))
-            report_cycle_rows = build_thermal_cycle_rows(
-                str(top_row["ht_class"]),
-                str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", ""))),
-            )
-            report_cycle_segment_rows = build_thermal_cycle_segment_rows(
-                str(top_row["ht_class"]),
-                str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", ""))),
-            )
+        with st.expander("Preview printable report", expanded=False):
+            with st.container(border=True):
+                st.markdown("<div class='print-report'>", unsafe_allow_html=True)
+                st.markdown("### Process & Material Specifications")
+                st.markdown("#### Full input conditions")
+                st.dataframe(pd.DataFrame([{"condition": key, "value": str(value)} for key, value in input_conditions.items()]), width="stretch", hide_index=True)
+                st.markdown("#### Recommended heat-treatment route")
+                report_cols = st.columns(4)
+                report_cols[0].metric("Route", str(top_row["ht_class"]))
+                report_cols[1].metric(
+                    "Peak temperature",
+                    f"{int(top_row['recommended_peak_temperature_C'])} C" if pd.notna(top_row.get("recommended_peak_temperature_C")) else "not specified",
+                )
+                report_cols[2].metric(
+                    "Total hold time",
+                    f"{float(top_row['recommended_total_hold_h']):.1f} h" if pd.notna(top_row.get("recommended_total_hold_h")) else "not specified",
+                )
+                report_cols[3].metric("Recommendation index", f"{float(top_row['ml_assisted_score']):.2f}")
+                st.write(str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", "No proposed recipe is available."))))
+                report_cycle_rows = build_thermal_cycle_rows(
+                    str(top_row["ht_class"]),
+                    str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", ""))),
+                )
+                report_cycle_segment_rows = build_thermal_cycle_segment_rows(
+                    str(top_row["ht_class"]),
+                    str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", ""))),
+                )
 
-            st.markdown("#### Technician heat-treatment instruction sheet")
-            st.write(
-                "Instruction status: draft work instruction for technician review; verify against the local furnace standard operating procedure before processing. "
-                "Do not begin heat treatment until the required blanks below are completed and the route is approved by the process owner."
-            )
-            tech_cols = st.columns(2)
-            with tech_cols[0]:
-                st.markdown("##### Material and specimen identification")
-                st.dataframe(
-                    pd.DataFrame(
-                        [
-                            {"field": "Specimen or batch ID", "value": "to be completed"},
-                            {"field": "Alloy and process", "value": "LPBF Inconel 718"},
-                            {"field": "Initial material state", "value": str(initial_state)},
-                            {"field": "Build orientation", "value": str(build_orientation)},
-                            {"field": "Surface condition", "value": str(surface_condition)},
-                            {"field": "Representative section size", "value": str(section_size)},
-                            {"field": "Number of specimens", "value": "to be completed"},
-                            {"field": "Drawing or coupon geometry reference", "value": "to be completed"},
-                        ]
-                    ),
-                    width="stretch",
-                    hide_index=True,
-                )
-            with tech_cols[1]:
-                st.markdown("##### Equipment and furnace programme")
-                st.dataframe(
-                    pd.DataFrame(
-                        [
-                            {"field": "Furnace ID", "value": "to be completed"},
-                            {"field": "Furnace programme ID", "value": "to be completed"},
-                            {"field": "Maximum permitted furnace temperature", "value": _display_constraint(resolved_furnace_limit_C, "C")},
-                            {"field": "Maximum practical cycle time", "value": _display_constraint(resolved_maximum_cycle_hours, "h")},
-                            {"field": "Planning ramp rate", "value": "10 C/min for dashboard occupancy estimate; record actual ramp"},
-                            {"field": "Furnace atmosphere, vacuum, or shielding gas", "value": "to be completed"},
-                            {"field": "Thermocouple or witness coupon location", "value": "to be completed"},
-                            {"field": "Final cooling method", "value": str(cooling_condition)},
-                        ]
-                    ),
-                    width="stretch",
-                    hide_index=True,
-                )
-            st.markdown("##### Nominal thermal programme")
-            if report_cycle_rows.empty:
-                st.info("Nominal thermal programme could not be parsed automatically; complete the furnace programme manually before processing.")
-            else:
-                cycle_reset = report_cycle_rows.reset_index(drop=True)
-                hold_steps = []
-                for idx, item in cycle_reset[cycle_reset["stage"].astype(str).str.startswith("hold")].iterrows():
-                    previous_elapsed = float(cycle_reset.iloc[idx - 1]["elapsed_h"]) if idx > 0 else 0.0
-                    hold_steps.append(
-                        {
-                            "Step": len(hold_steps) + 1,
-                            "Action": "Hold at temperature",
-                            "Set point": f"{int(item['temperature_C'])} C",
-                            "Hold time": f"{float(item['elapsed_h']) - previous_elapsed:g} h",
-                            "Cooling or transfer note": "Proceed directly to the next specified step unless the local furnace procedure requires an intermediate cool.",
-                        }
-                    )
-                st.dataframe(pd.DataFrame(hold_steps), width="stretch", hide_index=True)
-            st.markdown("##### Stage interpretation through the profile")
-            if str(top_row["ht_class"]) == "ST_DA":
+                st.markdown("#### Technician heat-treatment instruction sheet")
                 st.write(
-                    "The full route is ST_DA: solution treatment is completed first, followed by the two ageing holds that make up double ageing."
+                    "Instruction status: draft work instruction for technician review; verify against the local furnace standard operating procedure before processing. "
+                    "Do not begin heat treatment until the required blanks below are completed and the route is approved by the process owner."
                 )
+                tech_cols = st.columns(2)
+                with tech_cols[0]:
+                    st.markdown("##### Material and specimen identification")
+                    st.dataframe(
+                        pd.DataFrame(
+                            [
+                                {"field": "Specimen or batch ID", "value": "to be completed"},
+                                {"field": "Alloy and process", "value": "LPBF Inconel 718"},
+                                {"field": "Initial material state", "value": str(initial_state)},
+                                {"field": "Build orientation", "value": str(build_orientation)},
+                                {"field": "Surface condition", "value": str(surface_condition)},
+                                {"field": "Representative section size", "value": str(section_size)},
+                                {"field": "Number of specimens", "value": "to be completed"},
+                                {"field": "Drawing or coupon geometry reference", "value": "to be completed"},
+                            ]
+                        ),
+                        width="stretch",
+                        hide_index=True,
+                    )
+                with tech_cols[1]:
+                    st.markdown("##### Equipment and furnace programme")
+                    st.dataframe(
+                        pd.DataFrame(
+                            [
+                                {"field": "Furnace ID", "value": "to be completed"},
+                                {"field": "Furnace programme ID", "value": "to be completed"},
+                                {"field": "Maximum permitted furnace temperature", "value": _display_constraint(resolved_furnace_limit_C, "C")},
+                                {"field": "Maximum practical cycle time", "value": _display_constraint(resolved_maximum_cycle_hours, "h")},
+                                {"field": "Planning ramp rate", "value": "10 C/min for dashboard occupancy estimate; record actual ramp"},
+                                {"field": "Furnace atmosphere, vacuum, or shielding gas", "value": "to be completed"},
+                                {"field": "Thermocouple or witness coupon location", "value": "to be completed"},
+                                {"field": "Final cooling method", "value": str(cooling_condition)},
+                            ]
+                        ),
+                        width="stretch",
+                        hide_index=True,
+                    )
+                st.markdown("##### Nominal thermal programme")
+                if report_cycle_rows.empty:
+                    st.info("Nominal thermal programme could not be parsed automatically; complete the furnace programme manually before processing.")
+                else:
+                    cycle_reset = report_cycle_rows.reset_index(drop=True)
+                    hold_steps = []
+                    for idx, item in cycle_reset[cycle_reset["stage"].astype(str).str.startswith("hold")].iterrows():
+                        previous_elapsed = float(cycle_reset.iloc[idx - 1]["elapsed_h"]) if idx > 0 else 0.0
+                        hold_steps.append(
+                            {
+                                "Step": len(hold_steps) + 1,
+                                "Action": "Hold at temperature",
+                                "Set point": f"{int(item['temperature_C'])} C",
+                                "Hold time": f"{float(item['elapsed_h']) - previous_elapsed:g} h",
+                                "Cooling or transfer note": "Proceed directly to the next specified step unless the local furnace procedure requires an intermediate cool.",
+                            }
+                        )
+                    st.dataframe(pd.DataFrame(hold_steps), width="stretch", hide_index=True)
+                st.markdown("##### Stage interpretation through the profile")
+                if str(top_row["ht_class"]) == "ST_DA":
+                    st.write(
+                        "The full route is ST_DA: solution treatment is completed first, followed by the two ageing holds that make up double ageing."
+                    )
+                    st.markdown(
+                        """
+                        | Profile region | When it occurs | Purpose in this route |
+                        | --- | --- | --- |
+                        | Solution treatment | Ramp to 980 C, then hold 980 C for 1 h | Sets the solution-treated condition before ageing; intended to reduce as-built heat-treatment sensitivity before precipitation ageing. |
+                        | Double ageing - first hold | After solution treatment, hold 720 C for 8 h | First ageing hold for precipitation strengthening. |
+                        | Double ageing - second hold | Then hold 620 C for 8 h | Second ageing hold completing the double-ageing sequence. |
+                        | Final cooling | After the 620 C hold | Use controlled furnace cooling unless the process owner approves a different cooling condition. |
+                        """
+                    )
+                else:
+                    st.write("Stage interpretation should be reviewed against the selected route and local furnace procedure before processing.")
+                st.markdown("##### Required process records")
                 st.markdown(
                     """
-                    | Profile region | When it occurs | Purpose in this route |
-                    | --- | --- | --- |
-                    | Solution treatment | Ramp to 980 C, then hold 980 C for 1 h | Sets the solution-treated condition before ageing; intended to reduce as-built heat-treatment sensitivity before precipitation ageing. |
-                    | Double ageing - first hold | After solution treatment, hold 720 C for 8 h | First ageing hold for precipitation strengthening. |
-                    | Double ageing - second hold | Then hold 620 C for 8 h | Second ageing hold completing the double-ageing sequence. |
-                    | Final cooling | After the 620 C hold | Use controlled furnace cooling unless the process owner approves a different cooling condition. |
+                    - Confirm furnace calibration is in date before loading.
+                    - Record actual ramp rate, soak start time, soak end time, and actual cooling condition.
+                    - Record specimen placement, fixture or tray arrangement, and thermocouple or witness coupon position.
+                    - Record any deviation from the programme before using the specimens for property claims.
+                    - Operator sign-off: to be completed.
                     """
                 )
-            else:
-                st.write("Stage interpretation should be reviewed against the selected route and local furnace procedure before processing.")
-            st.markdown("##### Required process records")
-            st.markdown(
-                """
-                - Confirm furnace calibration is in date before loading.
-                - Record actual ramp rate, soak start time, soak end time, and actual cooling condition.
-                - Record specimen placement, fixture or tray arrangement, and thermocouple or witness coupon position.
-                - Record any deviation from the programme before using the specimens for property claims.
-                - Operator sign-off: to be completed.
-                """
-            )
 
-            plot_col_1, plot_col_2 = st.columns(2)
-            with plot_col_1:
-                st.markdown("#### Heat-treatment profile plot")
-                if report_cycle_segment_rows.empty:
-                    st.info("Thermal-cycle profile is unavailable for the selected route.")
-                else:
-                    report_cycle_fig = px.line(
-                        report_cycle_segment_rows,
-                        x="elapsed_h",
-                        y="temperature_C",
-                        markers=True,
-                        color="segment_label",
-                        line_group="segment_id",
-                        color_discrete_map=THERMAL_STEP_COLORS,
-                        labels={"elapsed_h": "Time, t (h)", "temperature_C": "Temperature, T (C)", "segment_label": "Thermal step"},
-                    )
-                    report_cycle_fig.update_traces(
-                        hovertemplate="Thermal step: %{fullData.name}<br>Time: %{x:.2f} h<br>Temperature: %{y:.0f} C<extra></extra>"
-                    )
-                    st.plotly_chart(academic_layout(report_cycle_fig, "Nominal recommended thermal cycle", height=390), width="stretch")
-                    st.caption("Nominal profile shown; actual thermal history depends on furnace thermal mass, part geometry, and thermocouple placement.")
-            with plot_col_2:
-                st.markdown("#### Fatigue validation schedule plot")
-                schedule_long = fatigue_schedule.melt(
-                    id_vars=["stress_amplitude_MPa", "target_runout_cycles"],
-                    value_vars=["sigma_max_MPa", "sigma_mean_MPa", "sigma_min_MPa"],
-                    var_name="stress_quantity",
-                    value_name="stress_MPa",
-                )
-                schedule_fig = px.line(
-                    schedule_long,
-                    x="stress_amplitude_MPa",
-                    y="stress_MPa",
-                    color="stress_quantity",
-                    markers=True,
-                    color_discrete_sequence=ACADEMIC_COLORS,
-                    labels={
-                        "stress_amplitude_MPa": "Stress amplitude, sigma_a (MPa)",
-                        "stress_MPa": "Applied stress, sigma (MPa)",
-                        "stress_quantity": "Stress quantity",
-                    },
-                )
-                schedule_fig.update_traces(
-                    hovertemplate="Stress amplitude: %{x:.0f} MPa<br>Applied stress: %{y:.0f} MPa<br>Quantity: %{fullData.name}<extra></extra>"
-                )
-                st.plotly_chart(academic_layout(schedule_fig, "Validation stress schedule", height=390), width="stretch")
-                st.caption(
-                    f"Stress levels are test conditions for R = {float(stress_ratio_R):g}; they do not indicate survival to "
-                    f"{int(target_life_cycles):,} cycles."
-                )
-
-            st.markdown("#### Expected static-property estimates")
-            property_rows = []
-            property_specs = [
-                ("UTS", "predicted_UTS_MPa", "MPa"),
-                ("YS", "predicted_YS_MPa", "MPa"),
-                ("Elongation", "predicted_elongation_pct", "%"),
-            ]
-            for label, column, unit in property_specs:
-                if column in top_row and pd.notna(top_row.get(column)):
-                    property_rows.append(
-                        {
-                            "property": label,
-                            "estimate": float(top_row[column]),
-                            "lower": float(top_row.get(f"{column}_lower", top_row[column])),
-                            "upper": float(top_row.get(f"{column}_upper", top_row[column])),
-                            "unit": unit,
-                        }
-                    )
-            if property_rows:
-                property_df = pd.DataFrame(property_rows)
-                property_fig = go.Figure()
-                for _, property_row in property_df.iterrows():
-                    property_fig.add_trace(
-                        go.Bar(
-                            x=[property_row["property"]],
-                            y=[property_row["estimate"]],
-                            error_y=dict(
-                                type="data",
-                                array=[max(property_row["upper"] - property_row["estimate"], 0.0)],
-                                arrayminus=[max(property_row["estimate"] - property_row["lower"], 0.0)],
-                            ),
-                            name=f"{property_row['property']} ({property_row['unit']})",
-                            hovertemplate=(
-                                "Property: %{x}<br>"
-                                "Estimate: %{y:.1f}<br>"
-                                "<extra></extra>"
-                            ),
+                plot_col_1, plot_col_2 = st.columns(2)
+                with plot_col_1:
+                    st.markdown("#### Heat-treatment profile plot")
+                    if report_cycle_segment_rows.empty:
+                        st.info("Thermal-cycle profile is unavailable for the selected route.")
+                    else:
+                        report_cycle_fig = px.line(
+                            report_cycle_segment_rows,
+                            x="elapsed_h",
+                            y="temperature_C",
+                            markers=True,
+                            color="segment_label",
+                            line_group="segment_id",
+                            color_discrete_map=THERMAL_STEP_COLORS,
+                            labels={"elapsed_h": "Time, t (h)", "temperature_C": "Temperature, T (C)", "segment_label": "Thermal step"},
                         )
+                        report_cycle_fig.update_traces(
+                            hovertemplate="Thermal step: %{fullData.name}<br>Time: %{x:.2f} h<br>Temperature: %{y:.0f} C<extra></extra>"
+                        )
+                        st.plotly_chart(academic_layout(report_cycle_fig, "Nominal recommended thermal cycle", height=390), width="stretch", config=PLOTLY_STATIC_CONFIG)
+                        st.caption("Nominal profile shown; actual thermal history depends on furnace thermal mass, part geometry, and thermocouple placement.")
+                with plot_col_2:
+                    st.markdown("#### Fatigue validation schedule plot")
+                    schedule_long = fatigue_schedule.melt(
+                        id_vars=["stress_amplitude_MPa", "target_runout_cycles"],
+                        value_vars=["sigma_max_MPa", "sigma_mean_MPa", "sigma_min_MPa"],
+                        var_name="stress_quantity",
+                        value_name="stress_MPa",
                     )
-                property_fig.update_yaxes(title="Estimated value")
-                st.plotly_chart(academic_layout(property_fig, "Expected static-property estimates with empirical bounds", height=390), width="stretch")
-                st.dataframe(property_df, width="stretch", hide_index=True)
-            else:
-                st.info("No calibrated static-property estimates are available for the selected route.")
+                    schedule_fig = px.line(
+                        schedule_long,
+                        x="stress_amplitude_MPa",
+                        y="stress_MPa",
+                        color="stress_quantity",
+                        markers=True,
+                        color_discrete_sequence=ACADEMIC_COLORS,
+                        labels={
+                            "stress_amplitude_MPa": "Stress amplitude, sigma_a (MPa)",
+                            "stress_MPa": "Applied stress, sigma (MPa)",
+                            "stress_quantity": "Stress quantity",
+                        },
+                    )
+                    schedule_fig.update_traces(
+                        hovertemplate="Stress amplitude: %{x:.0f} MPa<br>Applied stress: %{y:.0f} MPa<br>Quantity: %{fullData.name}<extra></extra>"
+                    )
+                    st.plotly_chart(academic_layout(schedule_fig, "Validation stress schedule", height=390), width="stretch", config=PLOTLY_STATIC_CONFIG)
+                    st.caption(
+                        f"Stress levels are test conditions for R = {float(stress_ratio_R):g}; they do not indicate survival to "
+                        f"{int(target_life_cycles):,} cycles."
+                    )
 
-            st.markdown("#### S-N training status")
-            st.write(str(sn_training_status["status_message"]))
-            st.write(str(sn_training_status["report_note"]))
-            if sn_model_available:
-                st.write(
-                    f"Trained S-N module: {len(sn_model_summary)} source-specific right-censored Basquin screening curves "
-                    f"from {len(sn_points)} reviewed marker points. Not a design allowable."
-                )
-            st.markdown("#### Markdown report preview")
-            st.markdown(report_markdown)
-            st.markdown("</div>", unsafe_allow_html=True)
+                st.markdown("#### Expected static-property estimates")
+                property_rows = []
+                property_specs = [
+                    ("UTS", "predicted_UTS_MPa", "MPa"),
+                    ("YS", "predicted_YS_MPa", "MPa"),
+                    ("Elongation", "predicted_elongation_pct", "%"),
+                ]
+                for label, column, unit in property_specs:
+                    if column in top_row and pd.notna(top_row.get(column)):
+                        property_rows.append(
+                            {
+                                "property": label,
+                                "estimate": float(top_row[column]),
+                                "lower": float(top_row.get(f"{column}_lower", top_row[column])),
+                                "upper": float(top_row.get(f"{column}_upper", top_row[column])),
+                                "unit": unit,
+                            }
+                        )
+                if property_rows:
+                    property_df = pd.DataFrame(property_rows)
+                    property_fig = go.Figure()
+                    for _, property_row in property_df.iterrows():
+                        property_fig.add_trace(
+                            go.Bar(
+                                x=[property_row["property"]],
+                                y=[property_row["estimate"]],
+                                error_y=dict(
+                                    type="data",
+                                    array=[max(property_row["upper"] - property_row["estimate"], 0.0)],
+                                    arrayminus=[max(property_row["estimate"] - property_row["lower"], 0.0)],
+                                ),
+                                name=f"{property_row['property']} ({property_row['unit']})",
+                                hovertemplate=(
+                                    "Property: %{x}<br>"
+                                    "Estimate: %{y:.1f}<br>"
+                                    "<extra></extra>"
+                                ),
+                            )
+                        )
+                    property_fig.update_yaxes(title="Estimated value")
+                    st.plotly_chart(academic_layout(property_fig, "Expected static-property estimates with empirical bounds", height=390), width="stretch", config=PLOTLY_STATIC_CONFIG)
+                    st.dataframe(property_df, width="stretch", hide_index=True)
+                else:
+                    st.info("No calibrated static-property estimates are available for the selected route.")
+
+                st.markdown("#### S-N training status")
+                st.write(str(sn_training_status["status_message"]))
+                st.write(str(sn_training_status["report_note"]))
+                if sn_model_available:
+                    st.write(
+                        f"Trained S-N module: {len(sn_model_summary)} source-specific right-censored Basquin screening curves "
+                        f"from {len(sn_points)} reviewed marker points. Not a design allowable."
+                    )
+                st.markdown("#### Markdown report preview")
+                st.markdown(report_markdown)
+                st.markdown("</div>", unsafe_allow_html=True)
 
     with st.expander("Current input context", expanded=False):
         st.write(
@@ -1822,7 +1854,7 @@ with tab1:
             }
         )
 
-    with st.expander("Disclaimer and context", expanded=True):
+    with st.expander("Interpretation notes", expanded=False):
         if not allow_hip:
             st.info("Local constraint: HIP is not available. Ranked routes therefore prioritise non-HIP heat treatments, while HIP remains available as a benchmark comparison.")
         if trained_model:
@@ -1836,255 +1868,256 @@ with tab1:
             "fatigue is defect-controlled in non-HIP LPBF Inconel 718 and must not be inferred from tensile strength alone."
         )
     st.divider()
-    st.markdown("#### Ranked treatment routes")
-    if filtered.empty:
-        st.warning("The reviewed evidence base is empty; treatment-route ranking cannot be computed in this session.")
-    else:
-        if not bool(selection_status.get("exact_match", True)):
-            st.warning(str(selection_status.get("selection_note", "")))
-            out_of_grid_fields = selection_status.get("out_of_grid_fields", [])
-            if out_of_grid_fields:
-                st.markdown("#### Out-of-grid input fields")
-                st.dataframe(pd.DataFrame(out_of_grid_fields), width="stretch")
-            st.caption(f"Fallback evidence subset: {selection_status.get('fallback_scope', 'closest available evidence subset')}.")
+    with st.expander("Detailed route ranking and model rationale", expanded=False):
+        st.markdown("#### Ranked treatment routes")
+        if filtered.empty:
+            st.warning("The reviewed evidence base is empty; treatment-route ranking cannot be computed in this session.")
+        else:
+            if not bool(selection_status.get("exact_match", True)):
+                st.warning(str(selection_status.get("selection_note", "")))
+                out_of_grid_fields = selection_status.get("out_of_grid_fields", [])
+                if out_of_grid_fields:
+                    st.markdown("#### Out-of-grid input fields")
+                    st.dataframe(pd.DataFrame(out_of_grid_fields), width="stretch")
+                st.caption(f"Fallback evidence subset: {selection_status.get('fallback_scope', 'closest available evidence subset')}.")
 
-        plot_rows = adjusted.copy()
-        if not plot_rows.empty:
-            fig = px.bar(
-                plot_rows,
-                x="ml_assisted_score",
-                y="ht_class",
-                color="local_feasibility",
-                orientation="h",
-                text="ml_assisted_score",
-                color_discrete_map=FEASIBILITY_COLORS,
-                custom_data=["local_feasibility"],
-                labels={
-                    "ml_assisted_score": "Model-supported recommendation index",
-                    "ht_class": "Heat-treatment route",
-                    "local_feasibility": "Local feasibility",
-                },
-            )
-            fig.update_traces(
-                texttemplate="%{text:.2f}",
-                textposition="outside",
-                hovertemplate=(
-                    "Route: %{y}<br>"
-                    "Recommendation index: %{x:.2f}<br>"
-                    "Local feasibility: %{customdata[0]}<br>"
-                    "<extra></extra>"
-                ),
-            )
-            fig.update_yaxes(categoryorder="array", categoryarray=list(reversed(plot_rows["ht_class"].tolist())))
-            st.plotly_chart(academic_layout(fig, "Model-supported heat-treatment ranking for the selected input context", height=520), width="stretch")
-
-            ev_fig = px.scatter(
-                plot_rows,
-                x="ml_assisted_rank",
-                y="evidence_count_seed",
-                size="ml_assisted_score",
-                color="ht_class",
-                color_discrete_sequence=ACADEMIC_COLORS,
-                custom_data=["ht_class"],
-                labels={"ml_assisted_rank": "Model-supported recommendation rank", "evidence_count_seed": "Supporting records", "ht_class": "Heat-treatment route"},
-            )
-            ev_fig.update_traces(
-                hovertemplate=(
-                    "Route: %{customdata[0]}<br>"
-                    "Rank: %{x}<br>"
-                    "Supporting records: %{y}<br>"
-                    "Recommendation index: %{marker.size:.2f}<br>"
-                    "<extra></extra>"
-                ),
-            )
-            ev_fig.update_xaxes(dtick=1)
-            st.plotly_chart(academic_layout(ev_fig, "Evidence support by recommendation rank", height=420), width="stretch")
-
-            st.divider()
-            v1, v2 = st.columns(2)
-            with v1:
-                st.markdown("#### Recommended-route thermal cycle")
-                cycle_source = str(top_row.get("selected_recipe_summary", top_row["temperature_time_window"])) if top_row is not None else ""
-                cycle_segment_rows = build_thermal_cycle_segment_rows(str(top_row["ht_class"]), cycle_source) if top_row is not None else pd.DataFrame()
-                if cycle_segment_rows.empty:
-                    st.info("Thermal-cycle profile is unavailable for the selected route.")
-                else:
-                    cycle_fig = px.line(
-                        cycle_segment_rows,
-                        x="elapsed_h",
-                        y="temperature_C",
-                        markers=True,
-                        color="segment_label",
-                        line_group="segment_id",
-                        color_discrete_map=THERMAL_STEP_COLORS,
-                        labels={"elapsed_h": "Elapsed time (h)", "temperature_C": "Temperature (C)", "segment_label": "Thermal step"},
-                    )
-                    cycle_fig.update_traces(
-                        hovertemplate=(
-                            "Route: %{customdata[0]}<br>"
-                            "Thermal step: %{customdata[1]}<br>"
-                            "Elapsed time: %{x:.2f} h<br>"
-                            "Temperature: %{y:.0f} C<br>"
-                            "<extra></extra>"
-                        ),
-                        customdata=cycle_segment_rows[["ht_class", "segment_label"]],
-                    )
-                    st.plotly_chart(academic_layout(cycle_fig, "Time-temperature profile for the top-ranked route", height=420), width="stretch")
-            with v2:
-                st.markdown("#### Property and evidence trade-off radar")
-                radar_rows = build_route_radar_rows(adjusted.sort_values("ml_assisted_rank").head(3))
-                if radar_rows.empty:
-                    st.info("Radar comparison is unavailable for the selected route set.")
-                else:
-                    radar_fig = go.Figure()
-                    for route, subset in radar_rows.groupby("ht_class"):
-                        closed = pd.concat([subset, subset.iloc[[0]]], ignore_index=True)
-                        radar_fig.add_trace(
-                            go.Scatterpolar(
-                                r=closed["value"],
-                                theta=closed["axis"],
-                                fill="toself",
-                                name=str(route),
-                                hovertemplate="Route: %{fullData.name}<br>Axis: %{theta}<br>Normalised value: %{r:.1f}<extra></extra>",
-                            )
-                        )
-                    radar_fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), showlegend=True)
-                    st.plotly_chart(academic_layout(radar_fig, "Normalised route trade-off comparison", height=420), width="stretch")
-
-            st.markdown("#### Recommendation-index contribution summary")
-            contribution_rows = build_recommendation_contribution_rows(top_row) if top_row is not None else pd.DataFrame()
-            if not contribution_rows.empty:
-                contribution_fig = go.Figure(
-                    go.Waterfall(
-                        x=contribution_rows["term"],
-                        y=contribution_rows["value"],
-                        measure=contribution_rows["measure"],
-                        connector={"line": {"color": "#6b7280"}},
-                        increasing={"marker": {"color": ACADEMIC_COLORS[0]}},
-                        totals={"marker": {"color": ACADEMIC_COLORS[2]}},
-                        hovertemplate="Term: %{x}<br>Contribution: %{y:.2f}<extra></extra>",
-                    )
+            plot_rows = adjusted.copy()
+            if not plot_rows.empty:
+                fig = px.bar(
+                    plot_rows,
+                    x="ml_assisted_score",
+                    y="ht_class",
+                    color="local_feasibility",
+                    orientation="h",
+                    text="ml_assisted_score",
+                    color_discrete_map=FEASIBILITY_COLORS,
+                    custom_data=["local_feasibility"],
+                    labels={
+                        "ml_assisted_score": "Model-supported recommendation index",
+                        "ht_class": "Heat-treatment route",
+                        "local_feasibility": "Local feasibility",
+                    },
                 )
-                st.plotly_chart(academic_layout(contribution_fig, "Evidence and property terms in the selected recommendation index", height=420), width="stretch")
+                fig.update_traces(
+                    texttemplate="%{text:.2f}",
+                    textposition="outside",
+                    hovertemplate=(
+                        "Route: %{y}<br>"
+                        "Recommendation index: %{x:.2f}<br>"
+                        "Local feasibility: %{customdata[0]}<br>"
+                        "<extra></extra>"
+                    ),
+                )
+                fig.update_yaxes(categoryorder="array", categoryarray=list(reversed(plot_rows["ht_class"].tolist())))
+                st.plotly_chart(academic_layout(fig, "Model-supported heat-treatment ranking for the selected input context", height=520), width="stretch", config=PLOTLY_STATIC_CONFIG)
 
-        with st.expander("Generate text recommendation", expanded=False):
-            st.markdown("#### Text recommendation")
-            st.write(generate_text_recommendation(top_row, manual_context))
-            if bool(top_row.get("outside_training_envelope", False)):
-                st.warning(str(top_row.get("training_envelope_note", "Extrapolation warning: selected route is outside the reviewed calibration envelope.")))
-            st.markdown("#### Must-have experimental validation")
-            st.write("These experiments should accompany any result reported from this recommendation.")
-            st.write(
-                "Required set: as-built baseline; AMS-style standard baseline; framework-recommended route; "
-                "hardness and tensile testing; SEM/EDS microstructural assessment; fatigue screening where specimen count and machine time allow."
-            )
-            st.dataframe(pd.DataFrame(build_must_have_experiments(str(top_row["ht_class"]), allow_hip)), width="stretch")
-            st.markdown("#### Stochastic response considerations")
-            st.write(
-                "The ranking should be interpreted as a candidate selection, not as deterministic performance evidence. "
-                "LPBF fatigue and ductility can vary with pore population, surface condition, build orientation, powder history, and local thermal history."
-            )
-            literature_notes = build_recommendation_literature_notes(target, build_orientation)
-            if literature_notes:
-                st.markdown("#### Supporting literature for recommendation")
-                for note in literature_notes:
-                    evidence = supporting_literature[supporting_literature["citation_key"] == note["citation_key"]].iloc[0]
-                    st.write(f"**{evidence['display_citation']}** ({evidence['doi']}): {note['note']}")
+                ev_fig = px.scatter(
+                    plot_rows,
+                    x="ml_assisted_rank",
+                    y="evidence_count_seed",
+                    size="ml_assisted_score",
+                    color="ht_class",
+                    color_discrete_sequence=ACADEMIC_COLORS,
+                    custom_data=["ht_class"],
+                    labels={"ml_assisted_rank": "Model-supported recommendation rank", "evidence_count_seed": "Supporting records", "ht_class": "Heat-treatment route"},
+                )
+                ev_fig.update_traces(
+                    hovertemplate=(
+                        "Route: %{customdata[0]}<br>"
+                        "Rank: %{x}<br>"
+                        "Supporting records: %{y}<br>"
+                        "Recommendation index: %{marker.size:.2f}<br>"
+                        "<extra></extra>"
+                    ),
+                )
+                ev_fig.update_xaxes(dtick=1)
+                st.plotly_chart(academic_layout(ev_fig, "Evidence support by recommendation rank", height=420), width="stretch", config=PLOTLY_STATIC_CONFIG)
 
-        with st.expander("Show model specification", expanded=False):
-            st.markdown("#### Model specification")
-            spec = build_model_specification()
-            for key, value in spec.items():
-                label = key.replace("_", " ").title()
-                if isinstance(value, list):
-                    st.markdown(f"**{label}**")
-                    for item in value:
-                        st.write(f"- {item}")
-                else:
-                    st.write(f"**{label}:** {value}")
-            if trained_model:
-                st.markdown("**Calibrated property model**")
-                st.write(f"Model family: {trained_model.get('model_family', 'not available')}")
-                st.write(f"Calibration rows: {trained_model.get('training_rows_total', 'not available')}")
-                st.write(f"Calibrated targets: {', '.join(trained_model.get('trained_targets', [])) or 'none'}")
-                st.write("This property model is not a physics-informed neural network; it is an empirically calibrated parametric model.")
-
-        for _, row in adjusted.sort_values("ml_assisted_rank").iterrows():
-            with st.container(border=True):
-                cols = st.columns([1, 2, 1, 1])
-                cols[0].metric(f"Rank {int(row['ml_assisted_rank'])}", row["ht_class"], f"index {row['ml_assisted_score']:.2f}")
-                cols[1].write(f"Proposed recipe: {row.get('selected_recipe_summary', row['temperature_time_window'])}")
-                cols[2].write(f"Evidence confidence: **{row['confidence']}**")
-                cols[3].write(f"Supporting records: **{row['evidence_count_seed']}**")
-                st.progress(max(0.0, min(float(row["ml_assisted_score"]), 1.0)), text=f"Recommendation index {float(row['ml_assisted_score']):.2f}")
-                st.markdown(f"<span class='route-chip'>{row['local_feasibility']}</span>", unsafe_allow_html=True)
-                st.caption(row["recommendation_reason"])
-                with st.expander("Rationale and evidence status"):
-                    st.write(f"Evidence envelope: **{row['inside_evidence_envelope']}**")
-                    st.write(f"Recommended validation recipe: **{row.get('selected_recipe_summary', 'not specified')}**")
-                    if pd.notna(row.get("recommended_peak_temperature_C")):
-                        st.write(f"Recommended peak temperature: **{int(row['recommended_peak_temperature_C'])} C**")
-                    if pd.notna(row.get("recommended_total_hold_h")):
-                        st.write(f"Recommended total hold time: **{float(row['recommended_total_hold_h']):.1f} h**")
-                    st.write(f"Fatigue validation context: **R = {stress_ratio_R:g}; Nf = {int(target_life_cycles):,} cycles**")
-                    st.write(f"Supporting temperature-time window: {row['temperature_time_window']}")
-                    st.write(f"Route evidence identifiers: **{row.get('route_evidence_ids', 'not available')}**")
-                    st.write(f"Score basis: {row.get('score_basis', 'not available')}")
-                    if str(row.get("ht_class", "")) == "CUSTOM_ST_DA":
-                        st.warning(
-                            "Short-cycle solution treatment is an exploratory thin coupon route. "
-                            "Use it only for low-thermal-mass coupons, approximately up to 3 mm wall thickness or up to 5 mm gauge diameter, "
-                            "and confirm the response by hardness, tensile testing, and microscopy."
+                st.divider()
+                v1, v2 = st.columns(2)
+                with v1:
+                    st.markdown("#### Recommended-route thermal cycle")
+                    cycle_source = str(top_row.get("selected_recipe_summary", top_row["temperature_time_window"])) if top_row is not None else ""
+                    cycle_segment_rows = build_thermal_cycle_segment_rows(str(top_row["ht_class"]), cycle_source) if top_row is not None else pd.DataFrame()
+                    if cycle_segment_rows.empty:
+                        st.info("Thermal-cycle profile is unavailable for the selected route.")
+                    else:
+                        cycle_fig = px.line(
+                            cycle_segment_rows,
+                            x="elapsed_h",
+                            y="temperature_C",
+                            markers=True,
+                            color="segment_label",
+                            line_group="segment_id",
+                            color_discrete_map=THERMAL_STEP_COLORS,
+                            labels={"elapsed_h": "Elapsed time (h)", "temperature_C": "Temperature (C)", "segment_label": "Thermal step"},
                         )
-                    st.write(f"Local feasibility: **{row['local_feasibility']}**")
-                    st.write(row["constraint_notes"])
-                    st.write(f"Property-estimation scope: **{row['ml_assistance_scope']}**")
-                    st.write(f"Evidence-weighted score before property-model blend: **{row['adjusted_score']:.2f}**")
-                    if "estimated_furnace_occupancy_h" in row and pd.notna(row.get("estimated_furnace_occupancy_h")):
-                        st.write(f"Estimated furnace occupancy: **{row['estimated_furnace_occupancy_h']:.2f} h**")
-                    if "metallurgical_rule_flags" in row and pd.notna(row.get("metallurgical_rule_flags")):
-                        st.write(f"Metallurgical rule flags: {row['metallurgical_rule_flags']}")
-                    if bool(row.get("outside_training_envelope", False)):
-                        st.warning(str(row.get("training_envelope_note", "Extrapolation warning: this route is outside the reviewed calibration envelope.")))
-                    elif "training_envelope_note" in row and pd.notna(row.get("training_envelope_note")):
-                        st.write(f"Calibration envelope status: {row['training_envelope_note']}")
-                    if "predicted_UTS_MPa" in row and pd.notna(row.get("predicted_UTS_MPa")):
-                        st.write(
-                            "Empirically calibrated property estimates with Empirical error bounds "
-                            f"(bounded to the observed evidence range): UTS {row['predicted_UTS_MPa']:.1f} MPa "
-                            f"[{row.get('predicted_UTS_MPa_lower', float('nan')):.1f}, {row.get('predicted_UTS_MPa_upper', float('nan')):.1f}], "
-                            f"YS {row.get('predicted_YS_MPa', float('nan')):.1f} MPa "
-                            f"[{row.get('predicted_YS_MPa_lower', float('nan')):.1f}, {row.get('predicted_YS_MPa_upper', float('nan')):.1f}], "
-                            f"elongation {row.get('predicted_elongation_pct', float('nan')):.1f}% "
-                            f"[{row.get('predicted_elongation_pct_lower', float('nan')):.1f}, {row.get('predicted_elongation_pct_upper', float('nan')):.1f}]."
+                        cycle_fig.update_traces(
+                            hovertemplate=(
+                                "Route: %{customdata[0]}<br>"
+                                "Thermal step: %{customdata[1]}<br>"
+                                "Elapsed time: %{x:.2f} h<br>"
+                                "Temperature: %{y:.0f} C<br>"
+                                "<extra></extra>"
+                            ),
+                            customdata=cycle_segment_rows[["ht_class", "segment_label"]],
                         )
-                        if "empirical_error_bound_note" in row and pd.notna(row.get("empirical_error_bound_note")):
-                            st.caption(str(row["empirical_error_bound_note"]))
-                    literature_notes = build_recommendation_literature_notes(target, build_orientation)
-                    if literature_notes:
-                        st.write("Supporting literature for recommendation:")
-                        for note in literature_notes:
-                            evidence = supporting_literature[supporting_literature["citation_key"] == note["citation_key"]].iloc[0]
-                            st.write(f"- {evidence['display_citation']} ({evidence['doi']}): {note['note']}")
-                    st.write("This route should be treated as an experimental candidate. Publication-level claims require validation on local EOS LPBF Inconel 718 specimens.")
-        with st.expander("Input context retained for the dossier"):
-            st.write(
-                {
-                    "primary_design_objective": target,
-                    "initial_material_state": initial_state,
-                    "representative_section_size": section_size,
-                    "hip_benchmark_included": allow_hip,
-                    "decision_posture": mode,
-                    "available_furnace_range": furnace_limit,
-                    "maximum_furnace_temperature_C": _display_constraint(resolved_furnace_limit_C, "C"),
-                    "maximum_practical_cycle_time_h": _display_constraint(resolved_maximum_cycle_hours, "h"),
-                    "surface_condition": surface_condition,
-                    "build_orientation": build_orientation,
-                    "cooling_condition_available": cooling_condition,
-                    "target_fatigue_life_cycles": target_life_cycles,
-                    "fatigue_stress_ratio_R": stress_ratio_R,
-                }
-            )
+                        st.plotly_chart(academic_layout(cycle_fig, "Time-temperature profile for the top-ranked route", height=420), width="stretch", config=PLOTLY_STATIC_CONFIG)
+                with v2:
+                    st.markdown("#### Property and evidence trade-off radar")
+                    radar_rows = build_route_radar_rows(adjusted.sort_values("ml_assisted_rank").head(3))
+                    if radar_rows.empty:
+                        st.info("Radar comparison is unavailable for the selected route set.")
+                    else:
+                        radar_fig = go.Figure()
+                        for route, subset in radar_rows.groupby("ht_class"):
+                            closed = pd.concat([subset, subset.iloc[[0]]], ignore_index=True)
+                            radar_fig.add_trace(
+                                go.Scatterpolar(
+                                    r=closed["value"],
+                                    theta=closed["axis"],
+                                    fill="toself",
+                                    name=str(route),
+                                    hovertemplate="Route: %{fullData.name}<br>Axis: %{theta}<br>Normalised value: %{r:.1f}<extra></extra>",
+                                )
+                            )
+                        radar_fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0, 100])), showlegend=True)
+                        st.plotly_chart(academic_layout(radar_fig, "Normalised route trade-off comparison", height=420), width="stretch", config=PLOTLY_STATIC_CONFIG)
+
+                st.markdown("#### Recommendation-index contribution summary")
+                contribution_rows = build_recommendation_contribution_rows(top_row) if top_row is not None else pd.DataFrame()
+                if not contribution_rows.empty:
+                    contribution_fig = go.Figure(
+                        go.Waterfall(
+                            x=contribution_rows["term"],
+                            y=contribution_rows["value"],
+                            measure=contribution_rows["measure"],
+                            connector={"line": {"color": "#6b7280"}},
+                            increasing={"marker": {"color": ACADEMIC_COLORS[0]}},
+                            totals={"marker": {"color": ACADEMIC_COLORS[2]}},
+                            hovertemplate="Term: %{x}<br>Contribution: %{y:.2f}<extra></extra>",
+                        )
+                    )
+                    st.plotly_chart(academic_layout(contribution_fig, "Evidence and property terms in the selected recommendation index", height=420), width="stretch", config=PLOTLY_STATIC_CONFIG)
+
+            with st.expander("Generate text recommendation", expanded=False):
+                st.markdown("#### Text recommendation")
+                st.write(generate_text_recommendation(top_row, manual_context))
+                if bool(top_row.get("outside_training_envelope", False)):
+                    st.warning(str(top_row.get("training_envelope_note", "Extrapolation warning: selected route is outside the reviewed calibration envelope.")))
+                st.markdown("#### Must-have experimental validation")
+                st.write("These experiments should accompany any result reported from this recommendation.")
+                st.write(
+                    "Required set: as-built baseline; AMS-style standard baseline; framework-recommended route; "
+                    "hardness and tensile testing; SEM/EDS microstructural assessment; fatigue screening where specimen count and machine time allow."
+                )
+                st.dataframe(pd.DataFrame(build_must_have_experiments(str(top_row["ht_class"]), allow_hip)), width="stretch")
+                st.markdown("#### Stochastic response considerations")
+                st.write(
+                    "The ranking should be interpreted as a candidate selection, not as deterministic performance evidence. "
+                    "LPBF fatigue and ductility can vary with pore population, surface condition, build orientation, powder history, and local thermal history."
+                )
+                literature_notes = build_recommendation_literature_notes(target, build_orientation)
+                if literature_notes:
+                    st.markdown("#### Supporting literature for recommendation")
+                    for note in literature_notes:
+                        evidence = supporting_literature[supporting_literature["citation_key"] == note["citation_key"]].iloc[0]
+                        st.write(f"**{evidence['display_citation']}** ({evidence['doi']}): {note['note']}")
+
+            with st.expander("Show model specification", expanded=False):
+                st.markdown("#### Model specification")
+                spec = build_model_specification()
+                for key, value in spec.items():
+                    label = key.replace("_", " ").title()
+                    if isinstance(value, list):
+                        st.markdown(f"**{label}**")
+                        for item in value:
+                            st.write(f"- {item}")
+                    else:
+                        st.write(f"**{label}:** {value}")
+                if trained_model:
+                    st.markdown("**Calibrated property model**")
+                    st.write(f"Model family: {trained_model.get('model_family', 'not available')}")
+                    st.write(f"Calibration rows: {trained_model.get('training_rows_total', 'not available')}")
+                    st.write(f"Calibrated targets: {', '.join(trained_model.get('trained_targets', [])) or 'none'}")
+                    st.write("This property model is not a physics-informed neural network; it is an empirically calibrated parametric model.")
+
+            for _, row in adjusted.sort_values("ml_assisted_rank").iterrows():
+                with st.container(border=True):
+                    cols = st.columns([1, 2, 1, 1])
+                    cols[0].metric(f"Rank {int(row['ml_assisted_rank'])}", row["ht_class"], f"index {row['ml_assisted_score']:.2f}")
+                    cols[1].write(f"Proposed recipe: {row.get('selected_recipe_summary', row['temperature_time_window'])}")
+                    cols[2].write(f"Evidence confidence: **{row['confidence']}**")
+                    cols[3].write(f"Supporting records: **{row['evidence_count_seed']}**")
+                    st.progress(max(0.0, min(float(row["ml_assisted_score"]), 1.0)), text=f"Recommendation index {float(row['ml_assisted_score']):.2f}")
+                    st.markdown(f"<span class='route-chip'>{row['local_feasibility']}</span>", unsafe_allow_html=True)
+                    st.caption(row["recommendation_reason"])
+                    with st.expander("Rationale and evidence status"):
+                        st.write(f"Evidence envelope: **{row['inside_evidence_envelope']}**")
+                        st.write(f"Recommended validation recipe: **{row.get('selected_recipe_summary', 'not specified')}**")
+                        if pd.notna(row.get("recommended_peak_temperature_C")):
+                            st.write(f"Recommended peak temperature: **{int(row['recommended_peak_temperature_C'])} C**")
+                        if pd.notna(row.get("recommended_total_hold_h")):
+                            st.write(f"Recommended total hold time: **{float(row['recommended_total_hold_h']):.1f} h**")
+                        st.write(f"Fatigue validation context: **R = {stress_ratio_R:g}; Nf = {int(target_life_cycles):,} cycles**")
+                        st.write(f"Supporting temperature-time window: {row['temperature_time_window']}")
+                        st.write(f"Route evidence identifiers: **{row.get('route_evidence_ids', 'not available')}**")
+                        st.write(f"Score basis: {row.get('score_basis', 'not available')}")
+                        if str(row.get("ht_class", "")) == "CUSTOM_ST_DA":
+                            st.warning(
+                                "Short-cycle solution treatment is an exploratory thin coupon route. "
+                                "Use it only for low-thermal-mass coupons, approximately up to 3 mm wall thickness or up to 5 mm gauge diameter, "
+                                "and confirm the response by hardness, tensile testing, and microscopy."
+                            )
+                        st.write(f"Local feasibility: **{row['local_feasibility']}**")
+                        st.write(row["constraint_notes"])
+                        st.write(f"Property-estimation scope: **{row['ml_assistance_scope']}**")
+                        st.write(f"Evidence-weighted score before property-model blend: **{row['adjusted_score']:.2f}**")
+                        if "estimated_furnace_occupancy_h" in row and pd.notna(row.get("estimated_furnace_occupancy_h")):
+                            st.write(f"Estimated furnace occupancy: **{row['estimated_furnace_occupancy_h']:.2f} h**")
+                        if "metallurgical_rule_flags" in row and pd.notna(row.get("metallurgical_rule_flags")):
+                            st.write(f"Metallurgical rule flags: {row['metallurgical_rule_flags']}")
+                        if bool(row.get("outside_training_envelope", False)):
+                            st.warning(str(row.get("training_envelope_note", "Extrapolation warning: this route is outside the reviewed calibration envelope.")))
+                        elif "training_envelope_note" in row and pd.notna(row.get("training_envelope_note")):
+                            st.write(f"Calibration envelope status: {row['training_envelope_note']}")
+                        if "predicted_UTS_MPa" in row and pd.notna(row.get("predicted_UTS_MPa")):
+                            st.write(
+                                "Empirically calibrated property estimates with Empirical error bounds "
+                                f"(bounded to the observed evidence range): UTS {row['predicted_UTS_MPa']:.1f} MPa "
+                                f"[{row.get('predicted_UTS_MPa_lower', float('nan')):.1f}, {row.get('predicted_UTS_MPa_upper', float('nan')):.1f}], "
+                                f"YS {row.get('predicted_YS_MPa', float('nan')):.1f} MPa "
+                                f"[{row.get('predicted_YS_MPa_lower', float('nan')):.1f}, {row.get('predicted_YS_MPa_upper', float('nan')):.1f}], "
+                                f"elongation {row.get('predicted_elongation_pct', float('nan')):.1f}% "
+                                f"[{row.get('predicted_elongation_pct_lower', float('nan')):.1f}, {row.get('predicted_elongation_pct_upper', float('nan')):.1f}]."
+                            )
+                            if "empirical_error_bound_note" in row and pd.notna(row.get("empirical_error_bound_note")):
+                                st.caption(str(row["empirical_error_bound_note"]))
+                        literature_notes = build_recommendation_literature_notes(target, build_orientation)
+                        if literature_notes:
+                            st.write("Supporting literature for recommendation:")
+                            for note in literature_notes:
+                                evidence = supporting_literature[supporting_literature["citation_key"] == note["citation_key"]].iloc[0]
+                                st.write(f"- {evidence['display_citation']} ({evidence['doi']}): {note['note']}")
+                        st.write("This route should be treated as an experimental candidate. Publication-level claims require validation on local EOS LPBF Inconel 718 specimens.")
+            with st.expander("Input context retained for the dossier"):
+                st.write(
+                    {
+                        "primary_design_objective": target,
+                        "initial_material_state": initial_state,
+                        "representative_section_size": section_size,
+                        "hip_benchmark_included": allow_hip,
+                        "decision_posture": mode,
+                        "available_furnace_range": furnace_limit,
+                        "maximum_furnace_temperature_C": _display_constraint(resolved_furnace_limit_C, "C"),
+                        "maximum_practical_cycle_time_h": _display_constraint(resolved_maximum_cycle_hours, "h"),
+                        "surface_condition": surface_condition,
+                        "build_orientation": build_orientation,
+                        "cooling_condition_available": cooling_condition,
+                        "target_fatigue_life_cycles": target_life_cycles,
+                        "fatigue_stress_ratio_R": stress_ratio_R,
+                    }
+                )
 
 with tab2:
     st.subheader("Evidence Base")
@@ -2237,7 +2270,7 @@ with tab3:
                 )
             fig.update_xaxes(title="Observed or recommended temperature range (C)")
             fig.update_yaxes(title="Heat-treatment route")
-            st.plotly_chart(academic_layout(fig, "Temperature windows represented in the current recommendation set", height=520), width="stretch")
+            st.plotly_chart(academic_layout(fig, "Temperature windows represented in the current recommendation set", height=520), width="stretch", config=PLOTLY_STATIC_CONFIG)
 
             posture_rows = []
             if not recs.empty:
@@ -2254,14 +2287,17 @@ with tab3:
                     animated,
                     x="recommendation_index",
                     y="ht_class",
-                    animation_frame="decision_posture",
                     orientation="h",
-                    color="ht_class",
+                    color="decision_posture",
+                    barmode="group",
                     color_discrete_sequence=ACADEMIC_COLORS,
-                    range_x=[0, max(0.9, float(animated["recommendation_index"].max()) + 0.05)],
-                    labels={"recommendation_index": "Recommendation index", "ht_class": "Heat-treatment route"},
+                    labels={
+                        "recommendation_index": "Recommendation index",
+                        "ht_class": "Heat-treatment route",
+                        "decision_posture": "Decision posture",
+                    },
                 )
-                st.plotly_chart(academic_layout(anim_fig, "Animated sensitivity of route ranking to decision posture", height=520), width="stretch")
+                st.plotly_chart(academic_layout(anim_fig, "Sensitivity of route ranking to decision posture", height=520), width="stretch", config=PLOTLY_STATIC_CONFIG)
 
         cols = ["ht_class", "temperature_time_window", "inside_evidence_envelope", "confidence", "recommendation_reason"]
         st.dataframe(recs[cols].drop_duplicates(), width="stretch")
@@ -2326,7 +2362,7 @@ with tab4:
                     "<extra></extra>"
                 )
             )
-            st.plotly_chart(academic_layout(pred_fig, "Calibrated property estimates for candidate routes", height=520), width="stretch")
+            st.plotly_chart(academic_layout(pred_fig, "Calibrated property estimates for candidate routes", height=520), width="stretch", config=PLOTLY_STATIC_CONFIG)
 
             # Visualise the calibrated trade-off among strength and ductility indicators.
             if "predicted_UTS_MPa" in route_predictions.columns and "predicted_YS_MPa" in route_predictions.columns and "predicted_elongation_pct" in route_predictions.columns:
@@ -2346,7 +2382,7 @@ with tab4:
                     },
                 )
                 scatter_3d.update_traces(marker=dict(size=8, line=dict(width=1, color='DarkSlateGrey')))
-                st.plotly_chart(academic_layout(scatter_3d, "3D Property Trade-off Landscape", height=600), width="stretch")
+                st.plotly_chart(academic_layout(scatter_3d, "3D Property Trade-off Landscape", height=600), width="stretch", config=PLOTLY_STATIC_CONFIG)
 
         if route_predictions.get("outside_training_envelope", pd.Series(dtype=bool)).astype(bool).any():
             st.warning("Extrapolation warning: at least one candidate route lies outside the reviewed calibration feature envelope. Treat its property estimate as a screening value only.")
@@ -2372,7 +2408,7 @@ with tab4:
                 "<extra></extra>"
             )
         )
-        st.plotly_chart(academic_layout(prop_fig, "Curated property evidence available for the current dataset", height=420), width="stretch")
+        st.plotly_chart(academic_layout(prop_fig, "Curated property evidence available for the current dataset", height=420), width="stretch", config=PLOTLY_STATIC_CONFIG)
         st.dataframe(counts, width="stretch")
         with st.expander("Curated mechanical-property records"):
             st.dataframe(measurements, width="stretch")
@@ -2462,7 +2498,7 @@ with tab4:
             )
         curve_fig.update_xaxes(type="log", title="Cycles to failure, Nf")
         curve_fig.update_yaxes(title="Stress amplitude, sigma_a (MPa)")
-        st.plotly_chart(academic_layout(curve_fig, "Literature S-N curves and reviewed marker points", height=620), width="stretch")
+        st.plotly_chart(academic_layout(curve_fig, "Literature S-N curves and reviewed marker points", height=620), width="stretch", config=PLOTLY_STATIC_CONFIG)
         st.caption(
             "Interpretation: fitted lines are dashed condition-specific Basquin regressions. "
             "Runouts are plotted and treated as right-censored runout lower-bound checks. R = -1 and not-reported stress-ratio data are not pooled."
@@ -2684,7 +2720,7 @@ with tab6:
         ),
         showlegend=True,
     )
-    st.plotly_chart(academic_layout(orientation_fig, "Build plate and build-direction convention", height=420), width="stretch")
+    st.plotly_chart(academic_layout(orientation_fig, "Build plate and build-direction convention", height=420), width="stretch", config=PLOTLY_STATIC_CONFIG)
     st.markdown("#### Extrapolation warning and Empirical error bounds")
     st.write(
         "The framework flags route estimates outside the reviewed calibration envelope and reports Empirical error bounds derived from calibration residuals. "

@@ -60,6 +60,23 @@ def test_dashboard_exposes_manual_inputs_and_auditable_model_views():
         assert phrase in APP_TEXT
 
 
+def test_dashboard_uses_compact_academic_navigation_and_static_plots():
+    required = [
+        "Recommended Thermal Protocol",
+        "Mechanical Response",
+        "Process Window & Validation",
+        "Evidence & Scientific Basis",
+        "Advanced inputs",
+        "Preview printable report",
+        "Detailed route ranking and model rationale",
+        "staticPlot",
+        "displayModeBar",
+    ]
+    for phrase in required:
+        assert phrase in APP_TEXT
+    assert "animation_frame" not in APP_TEXT
+
+
 def test_dashboard_input_controls_include_detailed_help_text():
     required = [
         "Select the property objective used to weight the route ranking.",
