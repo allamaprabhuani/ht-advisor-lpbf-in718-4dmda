@@ -21,6 +21,7 @@ def test_dashboard_uses_academic_framing_not_internal_language():
         "Training rows",
         "Trained targets",
         "Review" + "er 2",
+        "S-N curves have not yet been used for training",
     ]
     lowered = APP_TEXT.lower()
     for phrase in banned:
@@ -39,11 +40,13 @@ def test_dashboard_exposes_manual_inputs_and_auditable_model_views():
         "Manual experimental inputs",
         "Maximum practical cycle time",
         "Fatigue stress ratio, R",
-        "Proposed experimental recipe",
+        "Recommended Thermal Processing Route",
         "Fatigue validation context",
         "Fatigue validation stress schedule",
         "stress_amplitude_MPa",
         "sigma_max_MPa",
+        "goodman_equivalent_R_minus_1_MPa",
+        "mean_stress_correction",
         "target_runout_cycles",
         "build_manual_context_from_inputs",
         "inspect.signature",
@@ -118,7 +121,7 @@ def test_dashboard_exposes_scientific_warnings_and_experiments():
         "AMS-style standard baseline",
         "SEM/EDS",
         "empirically calibrated parametric model",
-        "Estimated furnace occupancy",
+        "Total thermal-cycle duration",
         "Metallurgical rule flags",
     ]
     for phrase in required:
@@ -169,6 +172,22 @@ def test_dashboard_uses_sidebar_inputs_and_expander_disclosure():
 
 def test_dashboard_adds_richer_academic_visualisations():
     required = [
+        "Evidence workflow visual",
+        "Research decision-support dossier",
+        "From reviewed LPBF Inconel 718 evidence to a testable heat-treatment route",
+        "Claim boundary",
+        "does not certify fatigue life",
+        "Literature corpus",
+        "AM-only audit",
+        "Route evidence",
+        "S-N screening",
+        "Technician validation",
+        "visual-evidence-strip",
+        "workflow-step",
+        "@keyframes evidenceFadeIn",
+        "prefers-reduced-motion",
+        "S-N screening thumbnail",
+        "Thermal-cycle thumbnail",
         "Recommended-route thermal cycle",
         "Property and evidence trade-off radar",
         "Recommendation-index contribution summary",
@@ -204,11 +223,11 @@ def test_dashboard_explains_build_orientation_coordinate_system():
 def test_dashboard_exposes_sn_preparation_audit():
     required = [
         "S-N PDF review queue",
-        "Blocking gates before fatigue model use",
+        "Outstanding checks before fatigue model use",
         "sn_pdf_review_queue.csv",
         "sn_digitisation_audit_summary.json",
         "High-priority review sources",
-        "S-N curves have not yet been used for training",
+        "S-N curves have been trained for source-specific literature conditions",
         "No reviewed S-N point rows are currently available",
     ]
     for phrase in required:
@@ -235,13 +254,36 @@ def test_dashboard_exposes_printable_recommendation_report():
 def test_dashboard_exposes_trained_sn_fatigue_module_without_design_allowable_claims():
     required = [
         "S-N Fatigue Module",
-        "physics-constrained Basquin",
+        "censored Basquin",
         "Literature S-N curves and reviewed marker points",
         "Not a design allowable",
         "sn_model_summary.csv",
         "sn_model_prediction_grid.csv",
         "sn_curve_points.csv",
+        "No R = 0.1 fatigue-life predictor",
         "line_dash",
+        "right-censored runout",
+        "Stress-ratio translated screening table",
+        "Goodman mean-stress translation",
+        "build_stress_ratio_screening_table",
+        "equivalent fully reversed",
+    ]
+    for phrase in required:
+        assert phrase in APP_TEXT
+
+
+def test_dashboard_exposes_route_evidence_and_model_cards():
+    required = [
+        "Route evidence table",
+        "route_evidence.csv",
+        "route_evidence_ids",
+        "score_basis",
+        "Download route evidence table",
+        "Formal model cards",
+        "static_model_card.md",
+        "sn_model_card.md",
+        "Download static model card",
+        "Download S-N model card",
     ]
     for phrase in required:
         assert phrase in APP_TEXT

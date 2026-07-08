@@ -1,4 +1,26 @@
-# Publication strategy: ML/DL contribution from the 4DMDA LPBF fatigue dataset
+# Publication strategy: traceable decision support for LPBF Inconel 718 heat treatment
+
+## Status note for conference use
+
+The current conference package should use the traceable decision-support framing in the first section of this document. Later sections describe possible future paper directions, including fatigue-life prediction, transfer learning, active learning, and deep-learning extensions. Those sections are not current implemented claims unless the corresponding model, local validation data, and comparison baselines have been added and verified.
+
+## Current paper direction
+
+The paper should be framed as traceable engineering decision support, not as a black-box fatigue-life machine-learning paper. Recent literature already contains machine-learning studies for AM/SLM Inconel 718 fatigue-life prediction, so the defensible novelty is the workflow:
+
+1. literature mining from a local AM-only corpus,
+2. AM-scope filtering and exclusion of non-AM/comparator records,
+3. source-file hashes and evidence traceability,
+4. local constraints such as non-HIP operation, furnace limit, section size, surface state, and build orientation,
+5. auditable heat-treatment route ranking,
+6. S-N evidence display with reviewed digitised marker points,
+7. technician-ready validation planning.
+
+Recommended title:
+
+**HT-Advisor: A Source-Traceable Decision-Support Framework for Heat-Treatment Selection and Fatigue Validation Planning in LPBF Inconel 718**
+
+The model claim should be limited to an empirically calibrated static-property screening model and a right-censored literature Basquin screening module. The current implementation does not train a local `R = 0.1` fatigue-life predictor and should not be described as a physics-informed neural network.
 
 ## Current evidence base in this folder
 

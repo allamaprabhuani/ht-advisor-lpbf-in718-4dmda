@@ -17,6 +17,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Best-supported non-HIP route in the expanded LPBF/SLM Inconel 718 evidence set; it balances precipitation strengthening, retained ductility, and practical furnace accessibility.",
+    "route_evidence_ids": "REV_ST_DA_001;REV_ST_DA_002;REV_ST_DA_003;REV_ST_DA_004",
+    "score_basis": "target property index=0.773; evidence bonus=0.090; cost penalty=0.036; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 1
   },
   {
@@ -37,6 +39,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Relevant where segregation and Laves-phase control are central considerations; the expanded corpus supports homogenisation and solution-time sensitivity, but the longer furnace cycle requires local validation.",
+    "route_evidence_ids": "REV_HA_ST_DA_001;REV_HA_ST_DA_002",
+    "score_basis": "target property index=0.780; evidence bonus=0.075; cost penalty=0.056; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 2
   },
   {
@@ -57,6 +61,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
+    "route_evidence_ids": "REV_CUSTOM_ST_DA_001",
+    "score_basis": "target property index=0.733; evidence bonus=0.075; cost penalty=0.030; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 3
   },
   {
@@ -77,6 +83,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Lower-cost ageing route for comparison; residual AM defects and microstructural heterogeneity may remain influential, so this route is best retained as a baseline rather than the primary validation route.",
+    "route_evidence_ids": "REV_DA_001;REV_DA_002",
+    "score_basis": "target property index=0.616; evidence bonus=0.045; cost penalty=0.016; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 4
   },
   {
@@ -97,6 +105,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Best-supported non-HIP route in the expanded LPBF/SLM Inconel 718 evidence set; it balances precipitation strengthening, retained ductility, and practical furnace accessibility.",
+    "route_evidence_ids": "REV_ST_DA_001;REV_ST_DA_002;REV_ST_DA_003;REV_ST_DA_004",
+    "score_basis": "target property index=0.753; evidence bonus=0.090; cost penalty=0.036; uncertainty penalty=0.080; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 1
   },
   {
@@ -117,6 +127,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Relevant where segregation and Laves-phase control are central considerations; the expanded corpus supports homogenisation and solution-time sensitivity, but the longer furnace cycle requires local validation.",
+    "route_evidence_ids": "REV_HA_ST_DA_001;REV_HA_ST_DA_002",
+    "score_basis": "target property index=0.762; evidence bonus=0.075; cost penalty=0.056; uncertainty penalty=0.080; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 2
   },
   {
@@ -137,6 +149,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
+    "route_evidence_ids": "REV_CUSTOM_ST_DA_001",
+    "score_basis": "target property index=0.712; evidence bonus=0.075; cost penalty=0.030; uncertainty penalty=0.080; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 3
   },
   {
@@ -157,6 +171,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Lower-cost ageing route for comparison; residual AM defects and microstructural heterogeneity may remain influential, so this route is best retained as a baseline rather than the primary validation route.",
+    "route_evidence_ids": "REV_DA_001;REV_DA_002",
+    "score_basis": "target property index=0.590; evidence bonus=0.045; cost penalty=0.016; uncertainty penalty=0.080; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 4
   },
   {
@@ -177,6 +193,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Best-supported non-HIP route in the expanded LPBF/SLM Inconel 718 evidence set; it balances precipitation strengthening, retained ductility, and practical furnace accessibility.",
+    "route_evidence_ids": "REV_ST_DA_001;REV_ST_DA_002;REV_ST_DA_003;REV_ST_DA_004",
+    "score_basis": "target property index=0.834; evidence bonus=0.090; cost penalty=0.036; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 1
   },
   {
@@ -197,6 +215,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
+    "route_evidence_ids": "REV_CUSTOM_ST_DA_001",
+    "score_basis": "target property index=0.784; evidence bonus=0.075; cost penalty=0.030; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 2
   },
   {
@@ -217,6 +237,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Relevant where segregation and Laves-phase control are central considerations; the expanded corpus supports homogenisation and solution-time sensitivity, but the longer furnace cycle requires local validation.",
+    "route_evidence_ids": "REV_HA_ST_DA_001;REV_HA_ST_DA_002",
+    "score_basis": "target property index=0.798; evidence bonus=0.075; cost penalty=0.056; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 3
   },
   {
@@ -237,6 +259,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Lower-cost ageing route for comparison; residual AM defects and microstructural heterogeneity may remain influential, so this route is best retained as a baseline rather than the primary validation route.",
+    "route_evidence_ids": "REV_DA_001;REV_DA_002",
+    "score_basis": "target property index=0.680; evidence bonus=0.045; cost penalty=0.016; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 4
   },
   {
@@ -257,6 +281,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Relevant where segregation and Laves-phase control are central considerations; the expanded corpus supports homogenisation and solution-time sensitivity, but the longer furnace cycle requires local validation.",
+    "route_evidence_ids": "REV_HA_ST_DA_001;REV_HA_ST_DA_002",
+    "score_basis": "target property index=0.778; evidence bonus=0.075; cost penalty=0.056; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 1
   },
   {
@@ -277,6 +303,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Best-supported non-HIP route in the expanded LPBF/SLM Inconel 718 evidence set; it balances precipitation strengthening, retained ductility, and practical furnace accessibility.",
+    "route_evidence_ids": "REV_ST_DA_001;REV_ST_DA_002;REV_ST_DA_003;REV_ST_DA_004",
+    "score_basis": "target property index=0.734; evidence bonus=0.090; cost penalty=0.036; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 2
   },
   {
@@ -297,6 +325,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
+    "route_evidence_ids": "REV_CUSTOM_ST_DA_001",
+    "score_basis": "target property index=0.704; evidence bonus=0.075; cost penalty=0.030; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 3
   },
   {
@@ -317,6 +347,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Lower-cost ageing route for comparison; residual AM defects and microstructural heterogeneity may remain influential, so this route is best retained as a baseline rather than the primary validation route.",
+    "route_evidence_ids": "REV_DA_001;REV_DA_002",
+    "score_basis": "target property index=0.580; evidence bonus=0.045; cost penalty=0.016; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 4
   },
   {
@@ -337,6 +369,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Fatigue-oriented benchmark route when HIP access is available; retained for comparison with locally feasible non-HIP treatments.",
+    "route_evidence_ids": "REV_HIP_ST_DA_001;REV_HIP_ST_DA_002",
+    "score_basis": "target property index=0.867; evidence bonus=0.060; cost penalty=0.076; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 1
   },
   {
@@ -357,6 +391,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Best-supported non-HIP route in the expanded LPBF/SLM Inconel 718 evidence set; it balances precipitation strengthening, retained ductility, and practical furnace accessibility.",
+    "route_evidence_ids": "REV_ST_DA_001;REV_ST_DA_002;REV_ST_DA_003;REV_ST_DA_004",
+    "score_basis": "target property index=0.773; evidence bonus=0.090; cost penalty=0.036; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 2
   },
   {
@@ -377,6 +413,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Relevant where segregation and Laves-phase control are central considerations; the expanded corpus supports homogenisation and solution-time sensitivity, but the longer furnace cycle requires local validation.",
+    "route_evidence_ids": "REV_HA_ST_DA_001;REV_HA_ST_DA_002",
+    "score_basis": "target property index=0.780; evidence bonus=0.075; cost penalty=0.056; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 3
   },
   {
@@ -397,6 +435,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Defect closure may improve fatigue response where porosity controls failure; retained as a benchmark because HIP is not locally available.",
+    "route_evidence_ids": "REV_HIP_DA_001",
+    "score_basis": "target property index=0.797; evidence bonus=0.060; cost penalty=0.064; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 4
   },
   {
@@ -417,6 +457,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
+    "route_evidence_ids": "REV_CUSTOM_ST_DA_001",
+    "score_basis": "target property index=0.733; evidence bonus=0.075; cost penalty=0.030; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 5
   },
   {
@@ -437,6 +479,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Lower-cost ageing route for comparison; residual AM defects and microstructural heterogeneity may remain influential, so this route is best retained as a baseline rather than the primary validation route.",
+    "route_evidence_ids": "REV_DA_001;REV_DA_002",
+    "score_basis": "target property index=0.616; evidence bonus=0.045; cost penalty=0.016; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 6
   },
   {
@@ -457,6 +501,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Fatigue-oriented benchmark route when HIP access is available; retained for comparison with locally feasible non-HIP treatments.",
+    "route_evidence_ids": "REV_HIP_ST_DA_001;REV_HIP_ST_DA_002",
+    "score_basis": "target property index=0.893; evidence bonus=0.060; cost penalty=0.076; uncertainty penalty=0.080; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 1
   },
   {
@@ -477,6 +523,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Defect closure may improve fatigue response where porosity controls failure; retained as a benchmark because HIP is not locally available.",
+    "route_evidence_ids": "REV_HIP_DA_001",
+    "score_basis": "target property index=0.828; evidence bonus=0.060; cost penalty=0.064; uncertainty penalty=0.080; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 2
   },
   {
@@ -497,6 +545,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Best-supported non-HIP route in the expanded LPBF/SLM Inconel 718 evidence set; it balances precipitation strengthening, retained ductility, and practical furnace accessibility.",
+    "route_evidence_ids": "REV_ST_DA_001;REV_ST_DA_002;REV_ST_DA_003;REV_ST_DA_004",
+    "score_basis": "target property index=0.753; evidence bonus=0.090; cost penalty=0.036; uncertainty penalty=0.080; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 3
   },
   {
@@ -517,6 +567,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Relevant where segregation and Laves-phase control are central considerations; the expanded corpus supports homogenisation and solution-time sensitivity, but the longer furnace cycle requires local validation.",
+    "route_evidence_ids": "REV_HA_ST_DA_001;REV_HA_ST_DA_002",
+    "score_basis": "target property index=0.762; evidence bonus=0.075; cost penalty=0.056; uncertainty penalty=0.080; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 4
   },
   {
@@ -537,6 +589,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
+    "route_evidence_ids": "REV_CUSTOM_ST_DA_001",
+    "score_basis": "target property index=0.712; evidence bonus=0.075; cost penalty=0.030; uncertainty penalty=0.080; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 5
   },
   {
@@ -557,6 +611,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Lower-cost ageing route for comparison; residual AM defects and microstructural heterogeneity may remain influential, so this route is best retained as a baseline rather than the primary validation route.",
+    "route_evidence_ids": "REV_DA_001;REV_DA_002",
+    "score_basis": "target property index=0.590; evidence bonus=0.045; cost penalty=0.016; uncertainty penalty=0.080; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 6
   },
   {
@@ -577,6 +633,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Fatigue-oriented benchmark route when HIP access is available; retained for comparison with locally feasible non-HIP treatments.",
+    "route_evidence_ids": "REV_HIP_ST_DA_001;REV_HIP_ST_DA_002",
+    "score_basis": "target property index=0.846; evidence bonus=0.060; cost penalty=0.076; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 1
   },
   {
@@ -597,6 +655,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Relevant where segregation and Laves-phase control are central considerations; the expanded corpus supports homogenisation and solution-time sensitivity, but the longer furnace cycle requires local validation.",
+    "route_evidence_ids": "REV_HA_ST_DA_001;REV_HA_ST_DA_002",
+    "score_basis": "target property index=0.778; evidence bonus=0.075; cost penalty=0.056; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 2
   },
   {
@@ -617,6 +677,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Best-supported non-HIP route in the expanded LPBF/SLM Inconel 718 evidence set; it balances precipitation strengthening, retained ductility, and practical furnace accessibility.",
+    "route_evidence_ids": "REV_ST_DA_001;REV_ST_DA_002;REV_ST_DA_003;REV_ST_DA_004",
+    "score_basis": "target property index=0.734; evidence bonus=0.090; cost penalty=0.036; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 3
   },
   {
@@ -637,6 +699,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Defect closure may improve fatigue response where porosity controls failure; retained as a benchmark because HIP is not locally available.",
+    "route_evidence_ids": "REV_HIP_DA_001",
+    "score_basis": "target property index=0.777; evidence bonus=0.060; cost penalty=0.064; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 4
   },
   {
@@ -657,6 +721,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Exploratory thin coupon screening route for local validation under available furnace constraints. The 0.5 h solution step is not a general component recommendation; it may be suitable only for low-thermal-mass specimens and may leave incomplete phase transformation in thicker sections.",
+    "route_evidence_ids": "REV_CUSTOM_ST_DA_001",
+    "score_basis": "target property index=0.704; evidence bonus=0.075; cost penalty=0.030; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 5
   },
   {
@@ -677,6 +743,8 @@
     "confidence": "medium",
     "inside_evidence_envelope": "yes",
     "recommendation_reason": "Lower-cost ageing route for comparison; residual AM defects and microstructural heterogeneity may remain influential, so this route is best retained as a baseline rather than the primary validation route.",
+    "route_evidence_ids": "REV_DA_001;REV_DA_002",
+    "score_basis": "target property index=0.580; evidence bonus=0.045; cost penalty=0.016; uncertainty penalty=0.040; local feasibility is applied downstream from the selected furnace/HIP constraints.",
     "rank": 6
   }
 ]

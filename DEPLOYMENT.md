@@ -22,7 +22,7 @@ Include:
 - `ml_project/extracted_data/corpus_scope_audit.csv`
 - `ml_project/extracted_data/manual_download_recommendations.csv`
 
-Avoid committing publisher PDFs or snipped publisher figures unless redistribution rights are clear. The deployed dashboard uses curated data tables, source metadata, local-file hashes, and S-N target registers, not the PDF binaries.
+Avoid committing publisher PDFs or snipped publisher figures unless redistribution rights are clear. The deployed dashboard uses curated data tables, source metadata, local-file hashes, reviewed S-N marker points, and fitted literature screening artifacts, not the PDF binaries.
 
 ## Streamlit Community Cloud Setup
 
@@ -41,22 +41,27 @@ ml_project/dashboard/app.py
 ## Local Run Command
 
 ```bash
-python3 -m pip install -r requirements.txt
-python3 -m streamlit run ml_project/dashboard/app.py
+python -m pip install -r requirements.txt
+python -m streamlit run ml_project/dashboard/app.py
 ```
 
 Use the regeneration scripts only when updating curated artifacts from local PDFs:
 
 ```bash
-python3 ml_project/extract_literature_data.py
-python3 ml_project/scripts/build_provenance_tables.py
-python3 ml_project/scripts/build_curated_seed.py
-python3 ml_project/scripts/train_physics_guided_model.py
-python3 ml_project/scripts/build_recommendations.py
+python ml_project/extract_literature_data.py
+python ml_project/scripts/build_provenance_tables.py
+python ml_project/scripts/build_curated_seed.py
+python ml_project/scripts/train_physics_guided_model.py
+python ml_project/scripts/train_sn_fatigue_model.py
+python ml_project/scripts/build_recommendations.py
 ```
 
 ## Scientific Use Statement
 
 HT-Advisor provides evidence-guided heat-treatment recommendations for LPBF Inconel 718. The outputs are experimental candidates with traceable evidence and should be validated on local material before being treated as process specifications.
 
-The current fatigue layer is a traceable S-N digitisation register, not a fitted fatigue-life predictor. Fatigue claims require reviewed digitised S-N points, defect characterization, surface-condition records, and local validation tests.
+The current fatigue layer contains reviewed literature S-N marker points and condition-specific right-censored Basquin screening fits. It is not a fitted local fatigue-life predictor. Fatigue claims require stress-ratio-specific local data, defect characterization, surface-condition records, and local validation tests before any design allowable or process qualification claim is made.
+
+## Public Access Verification
+
+The intended public route is Streamlit Community Cloud. Before placing a QR code or public link in conference material, verify the deployed URL from a fresh browser session or mobile data connection. A local or same-network Streamlit URL is acceptable for a live laptop demonstration, but it should be labelled as a local demo rather than a public service.

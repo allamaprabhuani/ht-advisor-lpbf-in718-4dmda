@@ -8,7 +8,7 @@
   "fatigue_candidate_pages": 466,
   "sn_candidate_pages": 179,
   "high_priority_sources": 26,
-  "blocking_gates": [
+  "outstanding_checks": [
     "stress_metric_unknown",
     "figure_identity_unverified",
     "source_page_missing",

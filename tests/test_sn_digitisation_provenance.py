@@ -66,7 +66,7 @@ def test_sn_targets_expose_stress_metric_review_state():
             assert row["review_status"] == "needs_review"
 
 
-def test_sn_preparation_audit_report_exists_and_records_gates():
+def test_sn_preparation_audit_report_exists_and_records_outstanding_checks():
     summary_path = REPORTS / "sn_digitisation_audit_summary.json"
     queue_path = REPORTS / "sn_pdf_review_queue.csv"
     assert summary_path.exists()
@@ -76,8 +76,8 @@ def test_sn_preparation_audit_report_exists_and_records_gates():
     assert summary["pdf_count"] == 36
     assert summary["registered_sn_targets"] >= 21
     assert summary["reviewed_sn_points"] >= 38
-    assert "stress_metric_unknown" in summary["blocking_gates"]
-    assert "figure_identity_unverified" in summary["blocking_gates"]
+    assert "stress_metric_unknown" in summary["outstanding_checks"]
+    assert "figure_identity_unverified" in summary["outstanding_checks"]
 
     queue = read_csv(queue_path)
     assert queue

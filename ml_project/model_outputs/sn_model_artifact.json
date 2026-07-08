@@ -1,14 +1,16 @@
 {
-  "model_family": "physics-constrained Basquin regression",
-  "training_scope": "condition-specific S-N fits for reviewed literature marker points",
+  "model_family": "right-censored Basquin screening regression",
+  "training_scope": "condition-specific S-N fits for reviewed literature marker points with runout lower-bound checks",
   "reviewed_points": 38,
   "trained_condition_models": 5,
   "stress_ratio_groups": [
     "-1",
     "not reported"
   ],
-  "runout_handling": "Runout markers are retained in sn_curve_points.csv but excluded from least-squares Basquin fitting.",
+  "local_r_ratio_predictor": false,
+  "runout_handling": "Runout markers are treated as right-censored lower-bound observations. Failure points set the least-squares Basquin slope, and runouts can shift the fitted intercept upward when needed to satisfy survival-at-runout constraints.",
   "claim_boundary": "Not a design allowable. Curves are source-specific literature fits for screening and experimental planning.",
+  "application_boundary": "No R = 0.1 fatigue-life predictor is trained yet. Current S-N curves are condition-specific literature fits for reviewed marker points at R = -1 or with stress ratio not reported; use them for screening and experiment planning only.",
   "data_files": {
     "reviewed_points": "ml_project/data/sn_curve_points.csv",
     "model_summary": "ml_project/model_outputs/sn_model_summary.csv",

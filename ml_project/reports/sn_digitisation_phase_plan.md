@@ -10,7 +10,7 @@ This report is generated from the local corpus and source metadata. It does not 
 - Reviewed S-N points: 38
 - High-priority review sources: 26
 
-## Blocking Gates Before Fatigue Model Use
+## Outstanding Checks Before Fatigue Model Use
 
 - stress_metric_unknown
 - figure_identity_unverified

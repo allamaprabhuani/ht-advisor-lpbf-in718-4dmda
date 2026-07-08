@@ -5,6 +5,8 @@ import re
 
 import pandas as pd
 
+from ml_project.ht_advisor.sn_fatigue import goodman_equivalent_reversed_amplitude
+
 
 @dataclass(frozen=True)
 class ManualInputContext:
@@ -327,6 +329,7 @@ def build_fatigue_validation_schedule(
     stress_ratio_R: float = 0.1,
     target_life_cycles: int | None = 1000000,
     stress_amplitudes_MPa: list[int] | None = None,
+    uts_MPa: float = 1350.0,
 ) -> pd.DataFrame:
     amplitudes = stress_amplitudes_MPa or [300, 350, 400, 450]
     if stress_ratio_R >= 1.0:
@@ -344,6 +347,13 @@ def build_fatigue_validation_schedule(
                 "sigma_max_MPa": int(round(sigma_max)),
                 "sigma_min_MPa": int(round(sigma_min)),
                 "sigma_mean_MPa": int(round(sigma_mean)),
+                "goodman_equivalent_R_minus_1_MPa": int(
+                    round(goodman_equivalent_reversed_amplitude(float(amplitude), float(stress_ratio_R), float(uts_MPa)))
+                ),
+                "mean_stress_correction": (
+                    f"Goodman equivalent fully reversed amplitude using UTS = {float(uts_MPa):.0f} MPa; "
+                    "screening translation only."
+                ),
                 "target_runout_cycles": int(target_life_cycles) if target_life_cycles else "not specified",
                 "interpretation": "validation stress level, not predicted life",
             }
@@ -368,10 +378,10 @@ def build_sn_training_status(
     if trained:
         status_message = (
             f"S-N point review has reached the minimum fitting threshold ({reviewed_point_rows} reviewed rows). "
-            "A fitted fatigue-life model should still be reported only after calibration diagnostics are reviewed."
+            "A literature S-N screening module may be reported only with source-specific calibration diagnostics."
         )
         report_note = (
-            "Fatigue-life fitting is eligible for calibration review, but local validation remains required before performance claims."
+            "No local R = 0.1 fatigue-life predictor is trained yet; local validation remains required before performance claims."
         )
     else:
         status_message = (

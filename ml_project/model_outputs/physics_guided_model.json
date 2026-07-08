@@ -197,5 +197,5 @@
     "basquin_law": "sigma_a = sigma_f_prime * (2Nf)^b",
     "defect_sensitive_fatigue_basis": "fatigue risk increases with near-surface defects, roughness, and stress concentration; Murakami sqrt(area) treatment can be added when defect-size data are available"
   },
-  "scope_statement": "The fitted model is calibrated on reviewed LPBF/SLM Inconel 718 property rows (n = 6). It estimates static tensile indicators where data are sufficient and uses fatigue physics qualitatively until condition-level S-N data are curated. The model does not explicitly resolve delta-phase fraction, Laves-phase dissolution, precipitate morphology, or defect-size distributions."
+  "scope_statement": "The fitted model is calibrated on reviewed LPBF/SLM Inconel 718 property rows (n = 6). It estimates static tensile indicators where data are sufficient and uses fatigue physics together with separate source-specific S-N fits where reviewed marker data are available. The model does not explicitly resolve delta-phase fraction, Laves-phase dissolution, precipitate morphology, or defect-size distributions."
 }

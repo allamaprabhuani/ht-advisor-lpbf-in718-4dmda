@@ -322,7 +322,58 @@ def train_and_write_artifacts(seed_rows: pd.DataFrame, output_dir: str | Path) -
     predictions.to_csv(output_path / "route_property_predictions.csv", index=False)
     with (output_path / "physics_guided_model.json").open("w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
+    (output_path / "static_model_card.md").write_text(build_static_model_card(report), encoding="utf-8")
     return report, predictions
+
+
+def build_static_model_card(report: dict[str, Any]) -> str:
+    trained_targets = ", ".join(report.get("trained_targets", [])) or "none"
+    skipped_targets = report.get("skipped_targets", {})
+    skipped_text = "\n".join(f"- {target}: {reason}" for target, reason in skipped_targets.items()) or "- None recorded."
+    return (
+        "# Static-Property Model Formal Model Card\n\n"
+        "## Model Purpose\n\n"
+        "This model supports HT-Advisor by estimating static tensile indicators for candidate heat-treatment routes in LPBF Inconel 718. "
+        "It is used for route screening and validation planning, not for material qualification.\n\n"
+        "## Data Counts\n\n"
+        f"- Calibration rows: {report.get('training_rows_total', 'not available')} curated heat-treatment/property records.\n"
+        "- The calibration rows are retained in the curated evidence tables and regenerated model outputs.\n"
+        f"- Trained targets: {trained_targets}.\n"
+        f"- Skipped targets:\n{skipped_text}\n\n"
+        "## Inputs\n\n"
+        "- Heat-treatment route indicators: HIP, solution treatment, double ageing.\n"
+        "- Thermal recipe features: maximum solution temperature, mean ageing temperature, total hold time.\n"
+        "- Metallurgical dose features: solution Larson-Miller parameter, ageing Larson-Miller parameter, thermal activation index.\n\n"
+        "## Outputs\n\n"
+        "- Ultimate tensile strength estimate.\n"
+        "- Yield strength estimate.\n"
+        "- Elongation estimate.\n"
+        "- Empirical lower and upper bounds derived from calibration residuals.\n"
+        "- Training-envelope flag for extrapolative route estimates.\n\n"
+        "## Excluded Data\n\n"
+        "- Non-AM and non-Inconel 718 records are excluded from calibration.\n"
+        "- Background-only literature is retained for interpretation but not used as calibration rows.\n"
+        "- Fatigue-life data are excluded from this static-property model.\n\n"
+        "## Assumptions\n\n"
+        "- The selected route class and thermal schedule are the dominant available descriptors in the present small dataset.\n"
+        "- Static tensile indicators can support route screening but cannot determine fatigue resistance in defect-sensitive LPBF material.\n"
+        "- Empirical bounds represent calibration scatter in the curated dataset, not design allowables.\n\n"
+        "## Limitations\n\n"
+        "- The dataset is small and heterogeneous.\n"
+        "- Powder batch, exact scan strategy, porosity, surface roughness, build location, and residual stress are not fully available.\n"
+        "- The model is an empirically calibrated parametric model, not a physics-informed neural network.\n"
+        "- Predictions outside the reviewed feature envelope should be treated as extrapolative screening estimates.\n\n"
+        "## Allowed Claims\n\n"
+        "- Evidence-bounded screening estimates for static tensile indicators.\n"
+        "- Ranking support for candidate heat-treatment routes under local constraints.\n"
+        "- Identification of routes requiring local validation before publication-level property claims.\n\n"
+        "## Claims Not Supported\n\n"
+        "- Qualification of a heat-treatment route.\n"
+        "- Deterministic tensile-property certification.\n"
+        "- Fatigue-life prediction.\n"
+        "- Replacement of local tensile, hardness, microscopy, or fatigue testing.\n"
+        "- Physics-informed neural-network performance claims.\n"
+    )
 
 
 def build_notation_table() -> pd.DataFrame:

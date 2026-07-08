@@ -316,9 +316,20 @@ def fit_basquin_models(points: pd.DataFrame, minimum_failures: int = 3) -> pd.Da
         slope, intercept = np.polyfit(x, y, deg=1)
         if slope >= 0:
             continue
+        censor_shift = 0.0
+        runout_margins: list[float] = []
+        if not runouts.empty:
+            runout_x = np.log10(2.0 * runouts["cycles_to_failure"].to_numpy(dtype=float))
+            runout_y = np.log10(runouts["stress_amplitude_MPa"].to_numpy(dtype=float))
+            initial_margins = intercept + slope * runout_x - runout_y
+            censor_shift = max(0.0, float(-initial_margins.min()) + 0.001)
+            intercept += censor_shift
+            runout_margins = (intercept + slope * runout_x - runout_y).tolist()
         fitted = intercept + slope * x
         residuals = y - fitted
         rmse = float(np.sqrt(np.mean(residuals**2))) if len(residuals) else 0.0
+        satisfied_runouts = sum(1 for margin in runout_margins if margin >= 0.0)
+        min_runout_margin = min(runout_margins) if runout_margins else float("nan")
         representative = data.iloc[0]
         rows.append(
             {
@@ -341,10 +352,19 @@ def fit_basquin_models(points: pd.DataFrame, minimum_failures: int = 3) -> pd.Da
                 "basquin_log10_sigma_f": round(float(intercept), 6),
                 "basquin_slope_b": round(float(slope), 6),
                 "rmse_log10_stress": round(max(rmse, 0.03), 6),
-                "model_status": "trained_condition_specific_basquin",
+                "censoring_method": (
+                    "failure-point Basquin fit with right-censored runout lower-bound adjustment"
+                    if len(runouts)
+                    else "failure-point Basquin fit; no right-censored runouts in this condition"
+                ),
+                "censor_intercept_shift_log10_stress": round(float(censor_shift), 6),
+                "n_censored_constraints_satisfied": int(satisfied_runouts),
+                "runout_margin_log10_stress": round(float(min_runout_margin), 6) if runout_margins else "",
+                "model_status": "trained_condition_specific_censored_basquin_screening",
                 "model_boundary": (
-                    "Condition-specific Basquin regression fitted to reviewed marker points. Runouts are retained in data but excluded "
-                    "from least-squares fitting. Do not pool across stress ratio, surface condition, or heat-treatment state."
+                    "Condition-specific Basquin regression fitted to reviewed marker points. Failure points set the least-squares "
+                    "slope and right-censored runouts are used as lower-bound constraints on the fitted stress-life curve. "
+                    "Do not pool across stress ratio, surface condition, or heat-treatment state."
                 ),
             }
         )
@@ -377,4 +397,111 @@ def make_prediction_grid(model_summary: pd.DataFrame, points_per_condition: int 
                     "model_boundary": model["model_boundary"],
                 }
             )
+    return pd.DataFrame(rows)
+
+
+def _stress_components(stress_amplitude_MPa: float, stress_ratio_R: float) -> tuple[float, float, float]:
+    if stress_ratio_R >= 1.0:
+        raise ValueError("stress_ratio_R must be less than 1.0")
+    sigma_max = 2.0 * float(stress_amplitude_MPa) / (1.0 - float(stress_ratio_R))
+    sigma_min = float(stress_ratio_R) * sigma_max
+    sigma_mean = 0.5 * (sigma_max + sigma_min)
+    return sigma_max, sigma_min, sigma_mean
+
+
+def goodman_equivalent_reversed_amplitude(
+    stress_amplitude_MPa: float,
+    stress_ratio_R: float,
+    uts_MPa: float,
+) -> float:
+    """Convert a stress amplitude at arbitrary R to an equivalent R = -1 amplitude.
+
+    This is a Goodman mean-stress screening correction, not an additional
+    fatigue calibration. It is used only to compare proposed tests against
+    reviewed fully reversed literature S-N curves.
+    """
+    _, _, sigma_mean = _stress_components(float(stress_amplitude_MPa), float(stress_ratio_R))
+    denominator = 1.0 - sigma_mean / float(uts_MPa)
+    if denominator <= 0.0:
+        return float("inf")
+    return float(stress_amplitude_MPa) / denominator
+
+
+def stress_amplitude_for_goodman_target(
+    equivalent_R_minus_1_amplitude_MPa: float,
+    stress_ratio_R: float,
+    uts_MPa: float,
+) -> float:
+    """Translate an R = -1 stress amplitude to another R using Goodman correction."""
+    if stress_ratio_R >= 1.0:
+        raise ValueError("stress_ratio_R must be less than 1.0")
+    mean_factor = (1.0 + float(stress_ratio_R)) / (1.0 - float(stress_ratio_R))
+    denominator = 1.0 + float(equivalent_R_minus_1_amplitude_MPa) * mean_factor / float(uts_MPa)
+    if denominator <= 0.0:
+        return float("nan")
+    return float(equivalent_R_minus_1_amplitude_MPa) / denominator
+
+
+def _basquin_stress_for_life(model: pd.Series, cycles_to_failure: float) -> float:
+    intercept = float(model["basquin_log10_sigma_f"])
+    slope = float(model["basquin_slope_b"])
+    log_stress = intercept + slope * math.log10(2.0 * float(cycles_to_failure))
+    return 10**log_stress
+
+
+def _basquin_life_for_stress(model: pd.Series, stress_amplitude_MPa: float) -> float:
+    intercept = float(model["basquin_log10_sigma_f"])
+    slope = float(model["basquin_slope_b"])
+    log_reversals = (math.log10(float(stress_amplitude_MPa)) - intercept) / slope
+    return (10**log_reversals) / 2.0
+
+
+def build_stress_ratio_screening_table(
+    model_summary: pd.DataFrame,
+    stress_ratios: list[float] | tuple[float, ...] = (-1.0, 0.0, 0.1),
+    target_cycles: list[int] | tuple[int, ...] = (100000, 300000, 1000000, 3000000, 10000000),
+    uts_MPa: float = 1350.0,
+    source_curve_stress_ratio_R: str = "-1",
+) -> pd.DataFrame:
+    """Build target-life stress amplitudes for multiple R values from reviewed R = -1 curves.
+
+    The returned rows are mean-stress-corrected screening values. They do not
+    create new R-specific training data and should not be reported as local
+    fatigue allowables.
+    """
+    if model_summary.empty:
+        return pd.DataFrame()
+    source_models = model_summary[model_summary["stress_ratio_R"].astype(str).eq(str(source_curve_stress_ratio_R))]
+    rows: list[dict[str, object]] = []
+    for _, model in source_models.iterrows():
+        for life in target_cycles:
+            equivalent_amplitude = _basquin_stress_for_life(model, float(life))
+            for ratio in stress_ratios:
+                screening_amplitude = stress_amplitude_for_goodman_target(equivalent_amplitude, float(ratio), float(uts_MPa))
+                sigma_max, sigma_min, sigma_mean = _stress_components(screening_amplitude, float(ratio))
+                translated_life = _basquin_life_for_stress(
+                    model,
+                    goodman_equivalent_reversed_amplitude(screening_amplitude, float(ratio), float(uts_MPa)),
+                )
+                rows.append(
+                    {
+                        "condition_id": model["condition_id"],
+                        "source_id": model.get("source_id", ""),
+                        "source_curve_stress_ratio_R": str(model["stress_ratio_R"]),
+                        "heat_treatment_class": model.get("heat_treatment_class", ""),
+                        "target_cycles": int(life),
+                        "screening_stress_ratio_R": round(float(ratio), 3),
+                        "screening_stress_amplitude_MPa": round(float(screening_amplitude), 1),
+                        "sigma_max_MPa": round(float(sigma_max), 1),
+                        "sigma_min_MPa": round(float(sigma_min), 1),
+                        "sigma_mean_MPa": round(float(sigma_mean), 1),
+                        "goodman_equivalent_R_minus_1_MPa": round(float(equivalent_amplitude), 1),
+                        "translated_life_cycles": round(float(translated_life), 0),
+                        "uts_assumption_MPa": round(float(uts_MPa), 1),
+                        "screening_boundary": (
+                            "Goodman mean-stress translation from reviewed R = -1 Basquin literature curves; "
+                            "not a separately trained stress-ratio-specific fatigue-life predictor."
+                        ),
+                    }
+                )
     return pd.DataFrame(rows)

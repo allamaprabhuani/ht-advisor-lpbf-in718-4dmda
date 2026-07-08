@@ -198,6 +198,8 @@ def test_fatigue_validation_schedule_computes_r_ratio_stress_levels_without_pred
         "sigma_max_MPa",
         "sigma_min_MPa",
         "sigma_mean_MPa",
+        "goodman_equivalent_R_minus_1_MPa",
+        "mean_stress_correction",
         "target_runout_cycles",
         "interpretation",
     ]
@@ -206,6 +208,8 @@ def test_fatigue_validation_schedule_computes_r_ratio_stress_levels_without_pred
     assert first["sigma_max_MPa"] == 667
     assert first["sigma_min_MPa"] == 67
     assert first["sigma_mean_MPa"] == 367
+    assert first["goodman_equivalent_R_minus_1_MPa"] > first["stress_amplitude_MPa"]
+    assert "Goodman" in first["mean_stress_correction"]
     assert first["target_runout_cycles"] == 1000000
     assert schedule["interpretation"].str.contains("validation stress level, not predicted life").all()
 
@@ -221,6 +225,20 @@ def test_sn_training_status_disables_fatigue_life_prediction_without_reviewed_po
     assert status["registered_targets"] == 2
     assert "S-N curves have not yet been trained" in status["status_message"]
     assert "Fatigue life is not predicted" in status["report_note"]
+
+
+def test_sn_training_status_keeps_literature_fit_separate_from_local_life_prediction():
+    status = build_sn_training_status(
+        sn_points=pd.DataFrame(
+            [{"source_id": "SRC", "review_status": "reviewed", "stress_ratio_R": "-1"} for _ in range(12)]
+        ),
+        sn_targets=pd.DataFrame([{"source_id": "SRC001"}]),
+    )
+
+    assert status["sn_model_trained"] is True
+    assert "literature S-N screening module" in status["status_message"]
+    assert "No local R = 0.1 fatigue-life predictor" in status["report_note"]
+    assert "fitted fatigue-life model" not in status["status_message"]
 
 
 def test_printable_report_includes_inputs_recipe_static_estimates_and_validation_boundary():

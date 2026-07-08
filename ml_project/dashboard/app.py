@@ -22,6 +22,7 @@ from ml_project.ht_advisor.dashboard_data import (
     build_thermal_cycle_segment_rows,
     build_thermal_cycle_rows,
 )
+from ml_project.ht_advisor.sn_fatigue import build_stress_ratio_screening_table
 from ml_project.ht_advisor.expert_system import (
     ManualInputContext,
     apply_manual_inputs,
@@ -365,6 +366,153 @@ st.markdown(
         background: #f4f6f7;
         color: var(--academic-ink);
     }
+    .dossier-hero {
+        margin: 0.95rem 0 1rem 0;
+        padding: 1.05rem 1.1rem;
+        background: #ffffff;
+        border: 1px solid var(--academic-border);
+        border-top: 4px solid var(--academic-accent);
+        border-radius: 6px;
+        box-shadow: 0 10px 24px rgba(23, 33, 43, 0.07);
+    }
+    .hero-kicker {
+        color: var(--academic-burgundy);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-bottom: 0.22rem;
+    }
+    .hero-title {
+        color: var(--academic-ink);
+        font-size: 1.18rem;
+        font-weight: 700;
+        line-height: 1.25;
+        margin-bottom: 0.38rem;
+    }
+    .hero-text {
+        color: var(--academic-muted);
+        max-width: 72rem;
+        line-height: 1.45;
+        margin-bottom: 0.8rem;
+    }
+    .hero-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.55rem;
+    }
+    .hero-fact {
+        min-height: 5rem;
+        padding: 0.68rem 0.72rem;
+        background: #f8faf9;
+        border: 1px solid #d7dfdc;
+        border-radius: 5px;
+    }
+    .hero-fact span {
+        display: block;
+        color: var(--academic-muted);
+        font-size: 0.76rem;
+        margin-bottom: 0.28rem;
+    }
+    .hero-fact strong {
+        display: block;
+        color: var(--academic-ink);
+        font-size: 0.92rem;
+        line-height: 1.25;
+    }
+    .claim-boundary {
+        border-left: 3px solid var(--academic-gold);
+    }
+    .evidence-workflow {
+        margin: 0.9rem 0 1.1rem 0;
+        padding: 0.85rem 0.9rem;
+        background: #ffffff;
+        border: 1px solid var(--academic-border);
+        border-radius: 6px;
+        box-shadow: 0 8px 22px rgba(23, 33, 43, 0.06);
+        animation: evidenceFadeIn 520ms ease-out both;
+    }
+    .workflow-caption {
+        color: var(--academic-muted);
+        font-size: 0.8rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        margin-bottom: 0.55rem;
+    }
+    .workflow-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 0.55rem;
+    }
+    .workflow-step {
+        min-height: 5.2rem;
+        padding: 0.7rem 0.72rem;
+        border: 1px solid #ccd6d8;
+        border-radius: 6px;
+        background: linear-gradient(180deg, #f8faf9 0%, #eef3f2 100%);
+        position: relative;
+        overflow: hidden;
+    }
+    .workflow-step::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--academic-accent);
+    }
+    .workflow-step strong {
+        display: block;
+        color: var(--academic-ink);
+        font-size: 0.9rem;
+        margin-bottom: 0.28rem;
+    }
+    .workflow-step span {
+        display: block;
+        color: var(--academic-muted);
+        font-size: 0.78rem;
+        line-height: 1.25;
+    }
+    .workflow-count {
+        color: var(--academic-burgundy) !important;
+        font-weight: 700;
+        font-size: 0.86rem !important;
+        margin-top: 0.34rem;
+    }
+    .visual-evidence-strip {
+        margin: 0.75rem 0 0.4rem 0;
+        padding: 0.65rem 0.75rem;
+        border-left: 4px solid var(--academic-accent);
+        background: #ffffff;
+        border-radius: 4px;
+        color: var(--academic-muted);
+        animation: evidenceFadeIn 620ms ease-out both;
+    }
+    @keyframes evidenceFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .evidence-workflow,
+        .visual-evidence-strip {
+            animation: none;
+        }
+    }
+    @media (max-width: 900px) {
+        .hero-grid {
+            grid-template-columns: 1fr;
+        }
+        .workflow-grid {
+            grid-template-columns: 1fr;
+        }
+    }
     .print-report {
         background: #ffffff;
         border: 1px solid var(--academic-border);
@@ -418,7 +566,15 @@ def load_json(path: Path, fingerprint: tuple[int, int]) -> dict:
         return json.load(f)
 
 
+@st.cache_data
+def load_text(path: Path, fingerprint: tuple[int, int]) -> str:
+    if not path.exists():
+        return ""
+    return path.read_text(encoding="utf-8")
+
+
 recs_path = OUTPUTS / "ht_recommendations.csv"
+route_evidence_path = OUTPUTS / "route_evidence.csv"
 sources_path = CURATED / "sources.csv"
 source_files_path = CURATED / "source_files.csv"
 recipes_path = CURATED / "heat_treatment_recipes.csv"
@@ -435,8 +591,11 @@ sn_audit_summary_path = REPORTS / "sn_digitisation_audit_summary.json"
 sn_model_summary_path = OUTPUTS / "sn_model_summary.csv"
 sn_model_prediction_grid_path = OUTPUTS / "sn_model_prediction_grid.csv"
 sn_model_artifact_path = OUTPUTS / "sn_model_artifact.json"
+static_model_card_path = OUTPUTS / "static_model_card.md"
+sn_model_card_path = OUTPUTS / "sn_model_card.md"
 
 recs = load_csv(recs_path, file_fingerprint(recs_path))
+route_evidence = load_csv(route_evidence_path, file_fingerprint(route_evidence_path))
 sources = load_csv(sources_path, file_fingerprint(sources_path))
 source_files = load_csv(source_files_path, file_fingerprint(source_files_path))
 recipes = load_csv(recipes_path, file_fingerprint(recipes_path))
@@ -453,6 +612,8 @@ sn_audit_summary = load_json(sn_audit_summary_path, file_fingerprint(sn_audit_su
 sn_model_summary = load_csv(sn_model_summary_path, file_fingerprint(sn_model_summary_path))
 sn_model_prediction_grid = load_csv(sn_model_prediction_grid_path, file_fingerprint(sn_model_prediction_grid_path))
 sn_model_artifact = load_json(sn_model_artifact_path, file_fingerprint(sn_model_artifact_path))
+static_model_card = load_text(static_model_card_path, file_fingerprint(static_model_card_path))
+sn_model_card = load_text(sn_model_card_path, file_fingerprint(sn_model_card_path))
 supporting_literature = build_supporting_literature_table()
 
 ACADEMIC_COLORS = ["#2f5d62", "#5b7f95", "#8a6f3d", "#6b7280", "#a44a3f", "#7d8f69"]
@@ -484,9 +645,17 @@ FATIGUE_SCHEDULE_COLUMN_CONFIG = {
     "sigma_max_MPa": st.column_config.NumberColumn("Maximum stress, sigma_max (MPa)"),
     "sigma_min_MPa": st.column_config.NumberColumn("Minimum stress, sigma_min (MPa)"),
     "sigma_mean_MPa": st.column_config.NumberColumn("Mean stress, sigma_mean (MPa)"),
+    "goodman_equivalent_R_minus_1_MPa": st.column_config.NumberColumn("Goodman equivalent R = -1 sigma_a (MPa)"),
+    "mean_stress_correction": st.column_config.TextColumn("Mean-stress correction"),
     "target_runout_cycles": st.column_config.TextColumn("Target runout cycles"),
     "interpretation": st.column_config.TextColumn("Interpretation"),
 }
+
+
+def _format_temperature_c(value: object) -> str:
+    if pd.isna(value):
+        return "not specified"
+    return f"{int(float(value))} °C"
 
 
 def _joined_available(values: pd.Series) -> str:
@@ -802,6 +971,69 @@ def academic_layout(fig: go.Figure, title: str, height: int | None = None) -> go
     return fig
 
 
+def build_sn_thumbnail_figure(
+    prediction_grid: pd.DataFrame,
+    point_table: pd.DataFrame,
+    max_conditions: int = 3,
+) -> go.Figure:
+    fig = go.Figure()
+    if prediction_grid.empty:
+        return fig
+
+    selected_conditions = list(prediction_grid["condition_id"].dropna().astype(str).drop_duplicates().head(max_conditions))
+    colors = ACADEMIC_COLORS
+    for idx, condition_id in enumerate(selected_conditions):
+        subset = prediction_grid[prediction_grid["condition_id"].astype(str) == condition_id].sort_values("cycles_to_failure")
+        if subset.empty:
+            continue
+        label = str(subset["heat_treatment_class"].dropna().iloc[0]) if "heat_treatment_class" in subset else condition_id
+        fig.add_trace(
+            go.Scatter(
+                x=subset["cycles_to_failure"],
+                y=subset["stress_amplitude_MPa"],
+                mode="lines",
+                name=label,
+                line=dict(color=colors[idx % len(colors)], width=2),
+                hovertemplate=(
+                    "Condition: %{fullData.name}<br>"
+                    "Cycles to failure, Nf: %{x:.2e}<br>"
+                    "Stress amplitude: %{y:.0f} MPa<extra></extra>"
+                ),
+            )
+        )
+
+        if not point_table.empty and "condition_id" in point_table:
+            points = point_table[point_table["condition_id"].astype(str) == condition_id]
+            if not points.empty:
+                fig.add_trace(
+                    go.Scatter(
+                        x=points["cycles_to_failure"],
+                        y=points["stress_amplitude_MPa"],
+                        mode="markers",
+                        name=f"{label} markers",
+                        marker=dict(
+                            color=colors[idx % len(colors)],
+                            size=7,
+                            symbol=[
+                                "triangle-up" if bool(flag) else "circle"
+                                for flag in points.get("runout_flag", pd.Series([False] * len(points))).fillna(False)
+                            ],
+                            line=dict(color="#17212b", width=0.5),
+                        ),
+                        hovertemplate=(
+                            "Reviewed marker<br>"
+                            "Nf: %{x:.2e}<br>"
+                            "Stress amplitude: %{y:.0f} MPa<extra></extra>"
+                        ),
+                        showlegend=False,
+                    )
+                )
+
+    fig.update_xaxes(type="log", title="Cycles to failure, Nf")
+    fig.update_yaxes(title="Stress amplitude, σa (MPa)")
+    return academic_layout(fig, "S-N screening thumbnail", height=290)
+
+
 def build_manual_context_from_inputs(**values) -> ManualInputContext:
     supported = set(inspect.signature(ManualInputContext).parameters)
     return ManualInputContext(**{key: value for key, value in values.items() if key in supported})
@@ -962,11 +1194,16 @@ with st.sidebar:
                 "recommended_total_hold_h",
                 "temperature_time_window",
                 "confidence",
+                "route_evidence_ids",
+                "score_basis",
             ]
             st.dataframe(
                 recs.reindex(columns=route_table_columns).drop_duplicates(),
                 width="stretch",
             )
+
+    st.divider()
+    st.markdown("Developer profile: [Allamaprabhu Ani](https://allamaprabhuani.github.io)")
 
 manual_context = build_manual_context_from_inputs(
     furnace_limit_C=int(furnace_limit_C),
@@ -1027,6 +1264,77 @@ if not recs.empty:
     adjusted = apply_ml_property_ranking(adjusted, route_predictions, target)
 
 top_row = adjusted.sort_values("ml_assisted_rank").iloc[0] if not adjusted.empty else None
+uts_for_goodman = 1350.0
+if top_row is not None and "predicted_UTS_MPa" in top_row and pd.notna(top_row.get("predicted_UTS_MPa")):
+    uts_for_goodman = float(top_row.get("predicted_UTS_MPa"))
+screening_ratios = sorted({-1.0, 0.0, 0.1, round(float(stress_ratio_R), 3)})
+stress_ratio_screening = (
+    build_stress_ratio_screening_table(
+        sn_model_summary,
+        stress_ratios=screening_ratios,
+        target_cycles=[100000, 300000, 1000000, 3000000, 10000000],
+        uts_MPa=uts_for_goodman,
+    )
+    if sn_model_available
+    else pd.DataFrame()
+)
+
+reviewed_sn_points = 0
+if not sn_points.empty:
+    if "review_status" in sn_points:
+        reviewed_sn_points = int(sn_points["review_status"].astype(str).str.contains("reviewed", case=False, na=False).sum())
+    else:
+        reviewed_sn_points = int(len(sn_points))
+am_scope_rows = int(len(scope)) if not scope.empty else int(len(source_files))
+workflow_route_rows = int(len(route_evidence)) if not route_evidence.empty else 0
+trained_sn_curves = int(len(sn_model_summary)) if not sn_model_summary.empty else 0
+technician_status = "available" if top_row is not None else "pending route selection"
+if top_row is not None:
+    hero_route = str(top_row.get("ht_class", "not available"))
+    hero_recipe = str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", "not specified"))).replace(" C", " °C")
+    hero_index = f"{float(top_row.get('ml_assisted_score', 0.0)):.2f}"
+    hero_evidence = f"{workflow_route_rows} route rows; {reviewed_sn_points} reviewed S-N points"
+    hero_boundary = "screening recommendation; not a fatigue-life allowable"
+else:
+    hero_route = "route pending"
+    hero_recipe = "complete the input context to rank candidate heat-treatment routes"
+    hero_index = "not available"
+    hero_evidence = f"{workflow_route_rows} route rows; {reviewed_sn_points} reviewed S-N points"
+    hero_boundary = "recommendations require local validation before property claims"
+st.markdown(
+    f"""
+    <section class="dossier-hero" aria-label="Research decision-support dossier">
+      <div class="hero-kicker">Research decision-support dossier</div>
+      <div class="hero-title">From reviewed LPBF Inconel 718 evidence to a testable heat-treatment route</div>
+      <div class="hero-text">
+        The dashboard ranks candidate routes, preserves source traceability, and translates the selected option into an experimental validation plan.
+        It supports selection of the next furnace run; it does not certify fatigue life or replace local testing.
+      </div>
+      <div class="hero-grid">
+        <div class="hero-fact"><span>Current recommendation</span><strong>{hero_route}</strong></div>
+        <div class="hero-fact"><span>Selected recipe</span><strong>{hero_recipe}</strong></div>
+        <div class="hero-fact"><span>Evidence snapshot</span><strong>{hero_evidence}</strong></div>
+        <div class="hero-fact claim-boundary"><span>Claim boundary</span><strong>{hero_boundary}; index {hero_index}</strong></div>
+      </div>
+    </section>
+    """,
+    unsafe_allow_html=True,
+)
+st.markdown(
+    f"""
+    <section class="evidence-workflow" aria-label="Evidence workflow visual">
+      <div class="workflow-caption">Evidence workflow visual</div>
+      <div class="workflow-grid">
+        <div class="workflow-step"><strong>Literature corpus</strong><span>Curated articles, spreadsheets, and local source-file hashes.</span><span class="workflow-count">{len(sources)} sources</span></div>
+        <div class="workflow-step"><strong>AM-only audit</strong><span>Records screened for additive-manufactured Inconel 718 relevance.</span><span class="workflow-count">{am_scope_rows} scope rows</span></div>
+        <div class="workflow-step"><strong>Route evidence</strong><span>Heat-treatment classes linked to source rows and feasibility logic.</span><span class="workflow-count">{workflow_route_rows} evidence rows</span></div>
+        <div class="workflow-step"><strong>S-N screening</strong><span>Reviewed fatigue markers retained for right-censored Basquin screening.</span><span class="workflow-count">{reviewed_sn_points} points; {trained_sn_curves} curves</span></div>
+        <div class="workflow-step"><strong>Technician validation</strong><span>Recommendation translated into a draft processing and test sheet.</span><span class="workflow-count">{technician_status}</span></div>
+      </div>
+    </section>
+    """,
+    unsafe_allow_html=True,
+)
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "Decision Dossier",
@@ -1042,15 +1350,15 @@ with tab1:
     if top_row is not None:
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Recommended route", str(top_row["ht_class"]), help="The highest-ranked heat treatment route based on the selected objective and constraints.")
-        m2.metric("Recommendation index", f"{float(top_row['ml_assisted_score']):.2f}", help="Composite score balancing property estimates, evidence confidence, and local feasibility.")
+        m2.metric("Recommendation index", f"{float(top_row['ml_assisted_score']):.2f}", help="A 0 to 1 composite score balancing property estimates, evidence confidence, and local feasibility for ranking candidate routes.")
         m3.metric("Evidence confidence", str(top_row["confidence"]), help="Categorical confidence derived from the number of supporting literature records.")
         occupancy = top_row.get("estimated_furnace_occupancy_h", "not assessed")
-        m4.metric("Estimated furnace occupancy", f"{float(occupancy):.1f} h" if pd.notna(occupancy) and occupancy != "not assessed" else "not assessed", help="Total expected hours of furnace time, excluding ramp rates.")
-        st.markdown("#### Proposed experimental recipe")
+        m4.metric("Total thermal-cycle duration", f"{float(occupancy):.1f} h" if pd.notna(occupancy) and occupancy != "not assessed" else "not assessed", help="Total expected hours of furnace time, excluding ramp rates.")
+        st.markdown("#### Recommended Thermal Processing Route")
         recipe_cols = st.columns(3)
         recipe_cols[0].metric(
             "Peak temperature",
-            f"{int(top_row['recommended_peak_temperature_C'])} C" if pd.notna(top_row.get("recommended_peak_temperature_C")) else "not specified",
+            _format_temperature_c(top_row.get("recommended_peak_temperature_C")),
             help="Concrete maximum temperature used for local feasibility ranking.",
         )
         recipe_cols[1].metric(
@@ -1063,13 +1371,119 @@ with tab1:
             f"R = {stress_ratio_R:g}; Nf = {int(target_life_cycles):,}",
             help="Stress ratio and target cycles for validation planning. This is not a fatigue-life prediction.",
         )
-        st.write(str(top_row.get("selected_recipe_summary", "No proposed recipe is available.")))
+        selected_recipe_text = str(top_row.get("selected_recipe_summary", "No proposed recipe is available.")).replace(" C", " °C")
+        st.write(selected_recipe_text)
+        st.markdown(
+            "<div class='visual-evidence-strip'>Selected route shown with derived thermal, fatigue-screening, and evidence-role visuals. "
+            "The S-N panel is literature screening evidence, not a local fatigue-life allowable.</div>",
+            unsafe_allow_html=True,
+        )
+        visual_cols = st.columns(2)
+        selected_recipe = str(top_row.get("selected_recipe_summary", top_row.get("temperature_time_window", "")))
+        route_cycle_segments = build_thermal_cycle_segment_rows(str(top_row["ht_class"]), selected_recipe)
+        with visual_cols[0]:
+            st.markdown("##### Thermal-cycle thumbnail")
+            if route_cycle_segments.empty:
+                st.info("Thermal-cycle profile is unavailable for the selected route.")
+            else:
+                route_cycle_fig = px.line(
+                    route_cycle_segments,
+                    x="elapsed_h",
+                    y="temperature_C",
+                    markers=True,
+                    color="segment_label",
+                    line_group="segment_id",
+                    color_discrete_map=THERMAL_STEP_COLORS,
+                    labels={"elapsed_h": "Time, t (h)", "temperature_C": "Temperature, T (°C)", "segment_label": "Thermal step"},
+                )
+                route_cycle_fig.update_traces(
+                    hovertemplate="Thermal step: %{fullData.name}<br>Time: %{x:.2f} h<br>Temperature: %{y:.0f} °C<extra></extra>"
+                )
+                hold_rows = route_cycle_segments[
+                    route_cycle_segments["segment_label"].astype(str).str.contains("hold", case=False, na=False)
+                ]
+                for _, hold in hold_rows.drop_duplicates(["segment_id"]).iterrows():
+                    route_cycle_fig.add_annotation(
+                        x=float(hold["elapsed_h"]),
+                        y=float(hold["temperature_C"]),
+                        text=f"{int(float(hold['temperature_C']))} °C",
+                        showarrow=False,
+                        yshift=12,
+                        font=dict(size=10, color="#17212b"),
+                        bgcolor="rgba(255,255,255,0.78)",
+                        bordercolor="#d8dee4",
+                        borderwidth=1,
+                    )
+                route_cycle_fig.update_layout(legend=dict(orientation="h", yanchor="top", y=-0.22, xanchor="left", x=0))
+                st.plotly_chart(academic_layout(route_cycle_fig, "Thermal-cycle thumbnail", height=360), width="stretch")
+        with visual_cols[1]:
+            st.markdown("##### S-N screening thumbnail")
+            if sn_model_available:
+                sn_thumb = build_sn_thumbnail_figure(sn_model_prediction_grid, sn_points)
+                st.plotly_chart(sn_thumb, width="stretch")
+                st.caption("Reviewed literature marker points and source-specific fitted curves; not a local design allowable.")
+            else:
+                st.info("S-N screening artifacts are unavailable in this run.")
+        st.markdown("##### Evidence support by role")
+        if route_evidence.empty:
+            st.info("Route-evidence rows are unavailable in this run.")
+        else:
+            route_evidence_subset = route_evidence[route_evidence["ht_class"].astype(str) == str(top_row["ht_class"])]
+            if route_evidence_subset.empty:
+                route_evidence_subset = route_evidence
+            evidence_role_counts = (
+                route_evidence_subset["evidence_role"].fillna("not specified").value_counts().reset_index()
+            )
+            evidence_role_counts.columns = ["evidence_role", "count"]
+            evidence_fig = px.bar(
+                evidence_role_counts,
+                x="count",
+                y="evidence_role",
+                orientation="h",
+                color_discrete_sequence=["#2f5d62"],
+                labels={"count": "Rows", "evidence_role": "Evidence role"},
+            )
+            evidence_fig.update_traces(
+                hovertemplate="Evidence role: %{y}<br>Rows: %{x}<extra></extra>"
+            )
+            st.plotly_chart(academic_layout(evidence_fig, "Route evidence roles", height=260), width="stretch")
         st.markdown("#### Fatigue validation stress schedule")
         st.caption(
             "These stress levels are proposed for experimental validation at the selected stress ratio. "
             "The table does not report predicted fatigue life."
         )
         st.dataframe(fatigue_schedule, width="stretch", column_config=FATIGUE_SCHEDULE_COLUMN_CONFIG)
+        if not stress_ratio_screening.empty:
+            route_screening = stress_ratio_screening[
+                stress_ratio_screening["heat_treatment_class"].astype(str).eq(str(top_row["ht_class"]))
+            ]
+            if route_screening.empty:
+                route_screening = stress_ratio_screening
+            selected_ratio_screening = route_screening[
+                route_screening["screening_stress_ratio_R"].astype(float).round(3).eq(round(float(stress_ratio_R), 3))
+            ]
+            if not selected_ratio_screening.empty:
+                st.markdown("#### Stress-ratio translated screening table")
+                st.caption(
+                    "Goodman mean-stress translation converts reviewed R = -1 S-N evidence into an equivalent fully reversed comparison. "
+                    f"The current table uses UTS = {uts_for_goodman:.0f} MPa. It is screening guidance, not a trained stress-ratio-specific fatigue-life predictor."
+                )
+                st.dataframe(
+                    selected_ratio_screening[
+                        [
+                            "condition_id",
+                            "target_cycles",
+                            "screening_stress_ratio_R",
+                            "screening_stress_amplitude_MPa",
+                            "sigma_max_MPa",
+                            "sigma_min_MPa",
+                            "goodman_equivalent_R_minus_1_MPa",
+                            "screening_boundary",
+                        ]
+                    ],
+                    width="stretch",
+                    hide_index=True,
+                )
         st.markdown("#### Text recommendation")
         st.info(generate_text_recommendation(top_row, manual_context))
         st.caption(
@@ -1352,7 +1766,7 @@ with tab1:
             st.write(str(sn_training_status["report_note"]))
             if sn_model_available:
                 st.write(
-                    f"Trained S-N module: {len(sn_model_summary)} source-specific physics-constrained Basquin curves "
+                    f"Trained S-N module: {len(sn_model_summary)} source-specific right-censored Basquin screening curves "
                     f"from {len(sn_points)} reviewed marker points. Not a design allowable."
                 )
             st.markdown("#### Markdown report preview")
@@ -1584,6 +1998,8 @@ with tab1:
                         st.write(f"Recommended total hold time: **{float(row['recommended_total_hold_h']):.1f} h**")
                     st.write(f"Fatigue validation context: **R = {stress_ratio_R:g}; Nf = {int(target_life_cycles):,} cycles**")
                     st.write(f"Supporting temperature-time window: {row['temperature_time_window']}")
+                    st.write(f"Route evidence identifiers: **{row.get('route_evidence_ids', 'not available')}**")
+                    st.write(f"Score basis: {row.get('score_basis', 'not available')}")
                     if str(row.get("ht_class", "")) == "CUSTOM_ST_DA":
                         st.warning(
                             "Short-cycle solution treatment is an exploratory thin coupon route. "
@@ -1660,7 +2076,7 @@ with tab2:
                 "The current recommendation system uses these curves as fatigue evidence context; route ranking remains constrained by stress ratio, surface state, and source envelope."
             )
         else:
-            st.info("S-N curves have not yet been used for training; the current model uses reviewed static-property data and treats fatigue inputs as validation context.")
+            st.info("S-N model artifacts are unavailable in this run; fatigue inputs are retained as validation context until reviewed curve artifacts are present.")
         if sn_audit_summary:
             a1, a2 = st.columns(2)
             a1.metric(
@@ -1673,12 +2089,13 @@ with tab2:
                 sn_audit_summary.get("fatigue_candidate_pages", "not available"),
                 help="Pages flagged by broad fatigue-term screening. These are review candidates, not confirmed S-N figures.",
             )
-            with st.expander("Blocking gates before fatigue model use", expanded=False):
+            with st.expander("Outstanding checks before fatigue model use", expanded=False):
                 st.caption(
-                    "Loaded from sn_digitisation_audit_summary.json. These gates must be cleared before reviewed S-N points are used for fatigue fitting."
+                    "Loaded from sn_digitisation_audit_summary.json. These checks must be resolved before reviewed S-N points are used for fatigue fitting."
                 )
-                for gate in sn_audit_summary.get("blocking_gates", []):
-                    st.write(f"- {gate}")
+                checks = sn_audit_summary.get("outstanding_checks", [])
+                for check in checks:
+                    st.write(f"- {check}")
         with st.expander("S-N digitisation register", expanded=False):
             st.caption(
                 "This register tracks fatigue figures before they are used as model data. "
@@ -1693,8 +2110,8 @@ with tab2:
             )
         with st.expander("Digitised S-N point data", expanded=False):
             st.caption(
-                "Point rows remain empty until marker-level data are extracted and reviewed. "
-                "Reviewed rows should include source, target, page, figure, curve, stress ratio, temperature, orientation, surface condition, and heat-treatment route."
+                "Reviewed point rows include source, target, page, figure, curve, stress ratio, temperature, orientation, surface condition, and heat-treatment route. "
+                "Empty point tables indicate that marker-level extraction and review have not yet been completed for that run."
             )
             if sn_points.empty:
                 st.info("No reviewed S-N point rows are currently available. Registered targets must be digitised and reviewed before fatigue-life fitting.")
@@ -1730,6 +2147,21 @@ with tab2:
             file_name="ht_advisor_raw_training_data_index.csv",
             mime="text/csv",
         )
+    with st.expander("Route evidence table", expanded=False):
+        st.caption(
+            "Loaded from route_evidence.csv. Each row links a heat-treatment route to source rows, temperature/time evidence, "
+            "fatigue relevance, local feasibility logic, and the score component it supports."
+        )
+        if route_evidence.empty:
+            st.info("No route evidence table is available in this run.")
+        else:
+            st.dataframe(route_evidence, width="stretch")
+            st.download_button(
+                "Download route evidence table",
+                route_evidence.to_csv(index=False).encode("utf-8"),
+                file_name="route_evidence.csv",
+                mime="text/csv",
+            )
     if not scope.empty:
         st.dataframe(scope, width="stretch")
     with st.expander("Supporting literature used for recommendation notes"):
@@ -1920,7 +2352,8 @@ with tab4:
     st.divider()
     st.markdown("#### S-N Fatigue Module")
     st.write(
-        "The fatigue module uses a physics-constrained Basquin formulation fitted to reviewed literature marker points. "
+        "The fatigue module uses a censored Basquin formulation fitted to reviewed literature marker points. "
+        "Failure points set the condition-specific trend and right-censored runout markers are retained as lower-bound checks. "
         "It is presented as screening evidence for experimental planning. Not a design allowable."
     )
     if sn_model_artifact:
@@ -1931,6 +2364,12 @@ with tab4:
         st.caption(
             "Files: sn_curve_points.csv, sn_model_summary.csv, and sn_model_prediction_grid.csv. "
             "Curves are dashed because they are literature-derived condition fits, not statistical fatigue allowables."
+        )
+        st.info(
+            sn_model_artifact.get(
+                "application_boundary",
+                "No R = 0.1 fatigue-life predictor is trained yet. Use the literature S-N fits for screening and experiment planning only.",
+            )
         )
     if sn_model_available:
         st.markdown("#### Literature S-N curves and reviewed marker points")
@@ -1996,8 +2435,39 @@ with tab4:
         st.plotly_chart(academic_layout(curve_fig, "Literature S-N curves and reviewed marker points", height=620), width="stretch")
         st.caption(
             "Interpretation: fitted lines are dashed condition-specific Basquin regressions. "
-            "Runouts are plotted but excluded from least-squares fitting. R = -1 and not-reported stress-ratio data are not pooled."
+            "Runouts are plotted and treated as right-censored runout lower-bound checks. R = -1 and not-reported stress-ratio data are not pooled."
         )
+        st.markdown("#### Stress-ratio translated screening table")
+        st.write(
+            "The table below applies a Goodman mean-stress translation to the reviewed R = -1 Basquin curves. "
+            "It provides equivalent fully reversed comparison stresses for multiple stress ratios and target lives. "
+            "It is not a separately trained stress-ratio-specific fatigue model."
+        )
+        if stress_ratio_screening.empty:
+            st.info("Stress-ratio translation is unavailable because no reviewed R = -1 Basquin curves are loaded.")
+        else:
+            st.caption(
+                f"Translation assumption: UTS = {uts_for_goodman:.0f} MPa. "
+                "Positive stress ratios reduce the allowable stress amplitude for the same equivalent R = -1 fatigue demand."
+            )
+            st.dataframe(
+                stress_ratio_screening[
+                    [
+                        "condition_id",
+                        "heat_treatment_class",
+                        "target_cycles",
+                        "screening_stress_ratio_R",
+                        "screening_stress_amplitude_MPa",
+                        "sigma_max_MPa",
+                        "sigma_min_MPa",
+                        "sigma_mean_MPa",
+                        "goodman_equivalent_R_minus_1_MPa",
+                        "screening_boundary",
+                    ]
+                ],
+                width="stretch",
+                hide_index=True,
+            )
         st.markdown("#### S-N model specification and traceability")
         st.dataframe(
             sn_model_summary,
@@ -2051,6 +2521,7 @@ with tab5:
 with tab6:
     st.subheader("Help and Scientific Basis")
     st.caption("How to use the tool: enter the local LPBF and heat-treatment constraints, review the ranked recommendation, inspect the calibration status, and validate the selected route experimentally.")
+    st.markdown("Project contact and developer profile: [Allamaprabhu Ani](https://allamaprabhuani.github.io).")
     for section in build_help_sections():
         st.markdown(f"#### {section['title']}")
         st.write(section["body"])
@@ -2067,6 +2538,26 @@ with tab6:
                 st.write(f"- {target}: {reason}")
     else:
         st.warning("No calibrated model artifact is available. Calibrate the property model before using property estimates.")
+    st.markdown("#### Formal model cards")
+    st.caption("The repository model cards define data counts, excluded data, assumptions, limitations, and allowed claims for the static and S-N modules.")
+    with st.expander("static_model_card.md", expanded=False):
+        st.markdown(static_model_card or "The static model card is not available in this run.")
+        if static_model_card:
+            st.download_button(
+                "Download static model card",
+                static_model_card.encode("utf-8"),
+                file_name="static_model_card.md",
+                mime="text/markdown",
+            )
+    with st.expander("sn_model_card.md", expanded=False):
+        st.markdown(sn_model_card or "The S-N model card is not available in this run.")
+        if sn_model_card:
+            st.download_button(
+                "Download S-N model card",
+                sn_model_card.encode("utf-8"),
+                file_name="sn_model_card.md",
+                mime="text/markdown",
+            )
     st.markdown("#### Notation and abbreviations")
     st.write("All route abbreviations and units used in the dashboard are defined here.")
     st.dataframe(build_notation_table(), width="stretch")

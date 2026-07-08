@@ -7,7 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from ml_project.ht_advisor.paths import MODEL_OUTPUT_DIR
 from ml_project.ht_advisor.provenance import write_csv
-from ml_project.ht_advisor.recommender import RecommendationRequest, rank_heat_treatments
+from ml_project.ht_advisor.recommender import RecommendationRequest, build_route_evidence_table, rank_heat_treatments
 
 
 def main() -> None:
@@ -26,6 +26,7 @@ def main() -> None:
         for row in rank_heat_treatments(scenario):
             rows.append({"scenario_id": f"SCENARIO_{s_idx}", **scenario.__dict__, **row})
     write_csv(MODEL_OUTPUT_DIR / "ht_recommendations.csv", rows)
+    build_route_evidence_table().to_csv(MODEL_OUTPUT_DIR / "route_evidence.csv", index=False)
     with (MODEL_OUTPUT_DIR / "ht_recommendations.json").open("w", encoding="utf-8") as f:
         json.dump(rows, f, indent=2)
     print(f"Wrote recommendations to {MODEL_OUTPUT_DIR}")

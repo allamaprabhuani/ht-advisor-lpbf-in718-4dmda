@@ -3,7 +3,7 @@
 
 This script does not digitise figures. It checks corpus/source traceability,
 scans extracted text for fatigue-relevant pages, and writes audit artifacts that
-define the review gates before marker-level digitisation can begin.
+define the outstanding checks before marker-level digitisation can begin.
 """
 
 from __future__ import annotations
@@ -102,21 +102,21 @@ def review_action(
     return ("no_fatigue_digitisation_action", "low")
 
 
-def blocking_gates(targets: list[dict[str, str]], reviewed_points: int) -> list[str]:
-    gates: list[str] = []
+def outstanding_checks(targets: list[dict[str, str]], reviewed_points: int) -> list[str]:
+    checks: list[str] = []
     if reviewed_points == 0:
-        gates.append("no_reviewed_sn_points")
+        checks.append("no_reviewed_sn_points")
     if any(row.get("stress_metric_type", "unknown") == "unknown" for row in targets):
-        gates.append("stress_metric_unknown")
+        checks.append("stress_metric_unknown")
     if any(row.get("figure_id", "") in {"", "not_yet_verified"} for row in targets):
-        gates.append("figure_identity_unverified")
+        checks.append("figure_identity_unverified")
     if any(not row.get("source_page", "") for row in targets):
-        gates.append("source_page_missing")
+        checks.append("source_page_missing")
     if any(row.get("figure_image_path", "") == "" for row in targets):
-        gates.append("figure_image_missing")
+        checks.append("figure_image_missing")
     if any(row.get("axis_scale_x", "unknown") == "unknown" or row.get("axis_scale_y", "unknown") == "unknown" for row in targets):
-        gates.append("axis_scale_unknown")
-    return gates
+        checks.append("axis_scale_unknown")
+    return checks
 
 
 def main() -> None:
@@ -202,7 +202,7 @@ def main() -> None:
         "fatigue_candidate_pages": total_fatigue_pages,
         "sn_candidate_pages": total_sn_pages,
         "high_priority_sources": sum(1 for row in queue_rows if row["priority"] == "high"),
-        "blocking_gates": blocking_gates(targets, reviewed_points),
+        "outstanding_checks": outstanding_checks(targets, reviewed_points),
     }
     REPORTS.mkdir(parents=True, exist_ok=True)
     (REPORTS / "sn_digitisation_audit_summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
@@ -220,10 +220,10 @@ def main() -> None:
         f"- Reviewed S-N points: {summary['reviewed_sn_points']}",
         f"- High-priority review sources: {summary['high_priority_sources']}",
         "",
-        "## Blocking Gates Before Fatigue Model Use",
+        "## Outstanding Checks Before Fatigue Model Use",
         "",
     ]
-    plan.extend(f"- {gate}" for gate in summary["blocking_gates"])
+    plan.extend(f"- {check}" for check in summary["outstanding_checks"])
     plan.extend(
         [
             "",
