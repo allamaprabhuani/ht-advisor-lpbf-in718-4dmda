@@ -1039,6 +1039,28 @@ def build_manual_context_from_inputs(**values) -> ManualInputContext:
     return ManualInputContext(**{key: value for key, value in values.items() if key in supported})
 
 
+def resolve_equipment_constraints(
+    furnace_limit: str,
+    furnace_limit_C: int | float,
+    maximum_cycle_hours: int | float,
+) -> tuple[int | None, float | None]:
+    """Translate sidebar planning fields into active ranking constraints."""
+
+    resolved_furnace_limit_C = None if furnace_limit == "not specified" else int(furnace_limit_C)
+    resolved_maximum_cycle_hours = None if maximum_cycle_hours is None else float(maximum_cycle_hours)
+    return resolved_furnace_limit_C, resolved_maximum_cycle_hours
+
+
+def _display_constraint(value: object, unit: str) -> str:
+    if value is None or pd.isna(value):
+        return "not specified"
+    if unit == "C":
+        return f"{int(float(value))} C"
+    if unit == "h":
+        return f"{float(value):.1f} h"
+    return f"{value} {unit}"
+
+
 with st.sidebar:
     st.header("Configuration")
     st.caption("Persistent input parameters for all recommendation, process-window, and property views.")
@@ -1087,7 +1109,7 @@ with st.sidebar:
     )
 
     st.markdown("#### Manual experimental inputs")
-    furnace_defaults = {"up to 980 C": 980, "up to 1065 C": 1065, "up to 1100 C": 1100, "not specified": 1100}
+    furnace_defaults = {"up to 980 C": 980, "up to 1065 C": 1065, "up to 1100 C": 1100, "not specified": 1250 if allow_hip else 1100}
     furnace_limit_C = st.number_input(
         "Maximum furnace temperature (C)",
         min_value=600,
@@ -1100,10 +1122,12 @@ with st.sidebar:
         "Maximum practical cycle time (h)",
         min_value=1.0,
         max_value=96.0,
-        value=20.0,
+        value=24.0 if allow_hip else 20.0,
         step=1.0,
         help=INPUT_HELP["maximum_cycle_hours"],
     )
+    if allow_hip:
+        st.caption("HIP benchmark routes require approximately 1163 C and at least 22 h of total hold time in the reviewed route library.")
     target_life_cycles = st.number_input(
         "Target fatigue life, if applicable (cycles)",
         min_value=0,
@@ -1165,7 +1189,7 @@ with st.sidebar:
                 "hip_benchmark_included": allow_hip,
                 "decision_posture": mode,
                 "available_furnace_range": furnace_limit,
-                "maximum_furnace_temperature_C": furnace_limit_C,
+                "maximum_furnace_temperature_C": "not specified" if furnace_limit == "not specified" else furnace_limit_C,
                 "maximum_practical_cycle_time_h": maximum_cycle_hours,
                 "initial_material_state": initial_state,
                 "representative_section_size": section_size,
@@ -1205,9 +1229,15 @@ with st.sidebar:
     st.divider()
     st.markdown("Developer profile: [Allamaprabhu Ani](https://allamaprabhuani.github.io)")
 
+resolved_furnace_limit_C, resolved_maximum_cycle_hours = resolve_equipment_constraints(
+    furnace_limit=furnace_limit,
+    furnace_limit_C=furnace_limit_C,
+    maximum_cycle_hours=maximum_cycle_hours,
+)
+
 manual_context = build_manual_context_from_inputs(
-    furnace_limit_C=int(furnace_limit_C),
-    maximum_cycle_hours=float(maximum_cycle_hours),
+    furnace_limit_C=resolved_furnace_limit_C,
+    maximum_cycle_hours=resolved_maximum_cycle_hours,
     section_size=section_size,
     surface_condition=surface_condition,
     build_orientation=build_orientation,
@@ -1232,8 +1262,8 @@ input_conditions = {
     "HIP benchmark inclusion": allow_hip,
     "Decision posture": mode,
     "Available furnace range": furnace_limit,
-    "Maximum furnace temperature": f"{int(furnace_limit_C)} C",
-    "Maximum practical cycle time": f"{float(maximum_cycle_hours):.1f} h",
+    "Maximum furnace temperature": _display_constraint(resolved_furnace_limit_C, "C"),
+    "Maximum practical cycle time": _display_constraint(resolved_maximum_cycle_hours, "h"),
     "Surface condition": surface_condition,
     "Build orientation": build_orientation,
     "Cooling condition": cooling_condition,
@@ -1608,8 +1638,8 @@ with tab1:
                         [
                             {"field": "Furnace ID", "value": "to be completed"},
                             {"field": "Furnace programme ID", "value": "to be completed"},
-                            {"field": "Maximum permitted furnace temperature", "value": f"{int(furnace_limit_C)} C"},
-                            {"field": "Maximum practical cycle time", "value": f"{float(maximum_cycle_hours):.1f} h"},
+                            {"field": "Maximum permitted furnace temperature", "value": _display_constraint(resolved_furnace_limit_C, "C")},
+                            {"field": "Maximum practical cycle time", "value": _display_constraint(resolved_maximum_cycle_hours, "h")},
                             {"field": "Planning ramp rate", "value": "10 C/min for dashboard occupancy estimate; record actual ramp"},
                             {"field": "Furnace atmosphere, vacuum, or shielding gas", "value": "to be completed"},
                             {"field": "Thermocouple or witness coupon location", "value": "to be completed"},
@@ -1782,8 +1812,8 @@ with tab1:
                 "hip_benchmark_included": allow_hip,
                 "decision_posture": mode,
                 "available_furnace_range": furnace_limit,
-                "maximum_furnace_temperature_C": furnace_limit_C,
-                "maximum_practical_cycle_time_h": maximum_cycle_hours,
+                "maximum_furnace_temperature_C": _display_constraint(resolved_furnace_limit_C, "C"),
+                "maximum_practical_cycle_time_h": _display_constraint(resolved_maximum_cycle_hours, "h"),
                 "surface_condition": surface_condition,
                 "build_orientation": build_orientation,
                 "cooling_condition_available": cooling_condition,
@@ -2046,8 +2076,8 @@ with tab1:
                     "hip_benchmark_included": allow_hip,
                     "decision_posture": mode,
                     "available_furnace_range": furnace_limit,
-                    "maximum_furnace_temperature_C": furnace_limit_C,
-                    "maximum_practical_cycle_time_h": maximum_cycle_hours,
+                    "maximum_furnace_temperature_C": _display_constraint(resolved_furnace_limit_C, "C"),
+                    "maximum_practical_cycle_time_h": _display_constraint(resolved_maximum_cycle_hours, "h"),
                     "surface_condition": surface_condition,
                     "build_orientation": build_orientation,
                     "cooling_condition_available": cooling_condition,

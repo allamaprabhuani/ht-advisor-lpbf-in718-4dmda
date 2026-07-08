@@ -13,6 +13,7 @@ from ml_project.ht_advisor.expert_system import (
     generate_text_recommendation,
     select_recommendation_subset,
 )
+from ml_project.ht_advisor.physics_guided_model import apply_ml_property_ranking
 
 
 def test_manual_inputs_mark_routes_outside_local_furnace_limit():
@@ -396,6 +397,31 @@ def test_select_recommendation_subset_returns_nonempty_global_fallback():
     assert not selected.empty
     assert status["exact_match"] is False
     assert {item["field"] for item in status["out_of_grid_fields"]} == {"Primary design objective", "HIP benchmark inclusion", "Decision posture"}
+
+
+def test_hip_enabled_fatigue_route_ranks_first_when_constraints_allow_hip():
+    recs = pd.read_csv("ml_project/model_outputs/ht_recommendations.csv")
+    predictions = pd.read_csv("ml_project/model_outputs/route_property_predictions.csv")
+
+    selected, status = select_recommendation_subset(recs, target="fatigue", allow_hip=True, confidence_mode="conservative")
+    adjusted = apply_manual_inputs(selected, ManualInputContext(furnace_limit_C=None, maximum_cycle_hours=24))
+    ranked = apply_ml_property_ranking(adjusted, predictions, target="fatigue")
+
+    assert status["exact_match"] is True
+    assert ranked.sort_values("ml_assisted_rank").iloc[0]["ht_class"] == "HIP_ST_DA"
+
+
+def test_hip_enabled_routes_are_demoted_when_local_constraints_do_not_allow_hip():
+    recs = pd.read_csv("ml_project/model_outputs/ht_recommendations.csv")
+    predictions = pd.read_csv("ml_project/model_outputs/route_property_predictions.csv")
+
+    selected, _ = select_recommendation_subset(recs, target="fatigue", allow_hip=True, confidence_mode="conservative")
+    adjusted = apply_manual_inputs(selected, ManualInputContext(furnace_limit_C=1100, maximum_cycle_hours=20))
+    ranked = apply_ml_property_ranking(adjusted, predictions, target="fatigue")
+
+    assert ranked.sort_values("ml_assisted_rank").iloc[0]["ht_class"] == "ST_DA"
+    hip_route = ranked.loc[ranked["ht_class"] == "HIP_ST_DA"].iloc[0]
+    assert hip_route["local_feasibility"] == "limited by selected furnace range"
 
 
 def test_example_input_combinations_are_available_for_guidance():
