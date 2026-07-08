@@ -1,4 +1,6 @@
 import pandas as pd
+import subprocess
+import sys
 
 from ml_project.ht_advisor.sn_fatigue import (
     build_reviewed_sn_points,
@@ -9,6 +11,33 @@ from ml_project.ht_advisor.sn_fatigue import (
     stress_amplitude_for_goodman_target,
 )
 from ml_project.scripts import train_sn_fatigue_model
+
+
+def test_dashboard_sn_screening_import_does_not_require_opencv():
+    script = """
+import importlib.abc
+import sys
+
+class BlockCv2(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname == "cv2":
+            raise ModuleNotFoundError("No module named 'cv2'")
+        return None
+
+sys.meta_path.insert(0, BlockCv2())
+from ml_project.ht_advisor.sn_fatigue import build_stress_ratio_screening_table
+print(build_stress_ratio_screening_table.__name__)
+"""
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=".",
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "build_stress_ratio_screening_table" in result.stdout
 
 
 def test_build_reviewed_sn_points_creates_traceable_marker_dataset():

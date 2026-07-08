@@ -4,12 +4,22 @@ from dataclasses import dataclass
 import math
 from pathlib import Path
 
-import cv2
 import numpy as np
 import pandas as pd
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _cv2():
+    try:
+        import cv2
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError(
+            "OpenCV is required only for S-N marker digitisation. "
+            "Install opencv-python-headless before running digitisation extraction functions."
+        ) from exc
+    return cv2
 
 
 SN_POINT_COLUMNS = [
@@ -87,6 +97,7 @@ def _marker_components(
     condition: str,
     legend_exclusion: tuple[int, int] | None = None,
 ) -> list[dict[str, object]]:
+    cv2 = _cv2()
     x0, y0, x1, y1 = crop
     n_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(mask, 8)
     points: list[dict[str, object]] = []
@@ -118,6 +129,7 @@ def _marker_components(
 
 
 def _extract_new10_points() -> list[dict[str, object]]:
+    cv2 = _cv2()
     image_path = ROOT / "ml_project" / "figures" / "sn_priority_rendered" / "NEW10_scan-11.png"
     if not image_path.exists():
         return []
@@ -160,6 +172,7 @@ def _extract_new10_points() -> list[dict[str, object]]:
 
 
 def _extract_new17_points() -> list[dict[str, object]]:
+    cv2 = _cv2()
     image_path = ROOT / "ml_project" / "figures" / "sn_priority_rendered" / "NEW17_p090-090.png"
     if not image_path.exists():
         return []
